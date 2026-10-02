@@ -1,31 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { isHeadsetLabel, micOptions, preferredMic } from "./audio-devices";
+import { micOptions, outputKind, preferredMic } from "./audio-devices";
 
 const dev = (deviceId: string, label: string, kind: MediaDeviceKind = "audioinput") =>
   ({ deviceId, label, kind, groupId: "", toJSON: () => ({}) }) as MediaDeviceInfo;
 
-describe("wybór mikrofonu", () => {
-  it("rozpoznaje słuchawki", () => {
-    expect(isHeadsetLabel("Bluetooth headset")).toBe(true);
-    expect(isHeadsetLabel("Galaxy Buds2 Pro")).toBe(true);
-    expect(isHeadsetLabel("Słuchawki przewodowe")).toBe(true);
-    expect(isHeadsetLabel("Speakerphone")).toBe(false);
-    expect(isHeadsetLabel("Built-in microphone")).toBe(false);
+// Tak Chrome na Androidzie nazywa wejścia audio.
+const android = [
+  dev("default", "Default"),
+  dev("speaker", "Speakerphone"),
+  dev("earpiece", "Headset earpiece"),
+  dev("bt", "Bluetooth headset"),
+  dev("cam", "Camera", "videoinput"),
+];
+
+describe("wybór miejsca dźwięku", () => {
+  it("rozpoznaje rodzaje urządzeń", () => {
+    expect(outputKind("Bluetooth headset")).toBe("bluetooth");
+    expect(outputKind("Galaxy Buds2 Pro")).toBe("bluetooth");
+    expect(outputKind("Headset earpiece")).toBe("phone");
+    expect(outputKind("Speakerphone")).toBe("speaker");
+    expect(outputKind("Wired headset")).toBe("wired");
+    expect(outputKind("Default")).toBe("phone");
   });
 
-  it("wybiera mikrofon słuchawek zamiast wbudowanego", () => {
-    const opts = micOptions([
-      dev("default", "Default"),
-      dev("builtin", "Built-in microphone"),
-      dev("bt", "Bluetooth headset"),
-      dev("cam", "Camera", "videoinput"),
-    ]);
-    expect(opts.map((o) => o.deviceId)).toEqual(["default", "builtin", "bt"]);
-    expect(preferredMic(opts, "builtin")).toBe("bt");
-    expect(preferredMic(opts, "bt")).toBeNull();
+  it("kolejność: Bluetooth → telefon przy uchu → głośnik", () => {
+    expect(preferredMic(micOptions(android), "default")).toBe("bt");
+    expect(preferredMic(micOptions(android), "bt")).toBeNull();
+    const noBt = micOptions(android.filter((d) => d.deviceId !== "bt"));
+    expect(preferredMic(noBt, "speaker")).toBe("default");
+    expect(preferredMic(noBt, "earpiece")).toBeNull();
+    expect(preferredMic(micOptions([dev("speaker", "Speakerphone")]), "speaker")).toBeNull();
   });
 
-  it("bez słuchawek niczego nie zmienia", () => {
-    expect(preferredMic(micOptions([dev("builtin", "Built-in microphone")]), "builtin")).toBeNull();
+  it("słuchawki przewodowe przed telefonem", () => {
+    const opts = micOptions([dev("default", "Default"), dev("wired", "Wired headset")]);
+    expect(preferredMic(opts, "default")).toBe("wired");
   });
 });

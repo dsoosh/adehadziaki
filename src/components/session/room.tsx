@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
-import { Bell, BellOff, Flag, Mic, MicOff, PhoneOff, SlidersHorizontal, Video, VideoOff } from "lucide-react";
+import { Bell, BellOff, Flag, Headphones, Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff } from "lucide-react";
 import { getActivity, MODE_LABELS } from "@/lib/activities";
-import { micOptions, preferredMic, type MicOption } from "@/lib/audio-devices";
+import { micOptions, OUTPUT_LABELS, preferredMic, type MicOption } from "@/lib/audio-devices";
 import { NETWORK_ERROR } from "@/lib/errors";
 import { PHASE_COPY, partnerNoShow, roomWindow, sessionPhase } from "@/lib/session-phase";
 import { choiceToSearch } from "@/lib/session-params";
@@ -14,6 +14,7 @@ import { formatClock, formatTime } from "@/lib/time";
 import { cn } from "@/lib/cn";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ChoiceTile } from "@/components/ui/choice-tile";
 import { Notice } from "@/components/ui/notice";
 import { AudioSink, Avatar, VideoTile, gentleSignal } from "./media";
 import { ReportForm } from "./report-form";
@@ -33,22 +34,13 @@ function readSoundPref(): boolean {
   }
 }
 
-const VOLUME_KEY = "adh:volume";
-
-function readVolumePref(): number {
-  if (typeof window === "undefined") return 1;
-  try {
-    const v = Number(localStorage.getItem(VOLUME_KEY));
-    return v >= 0.25 && v <= 3 ? v : 1;
-  } catch {
-    return 1;
-  }
-}
-
 /** Mikrofon o podanym id (lub domyślny), z redukcją echa i szumów. */
 function micConstraints(deviceId?: string): MediaTrackConstraints {
   return { ...(deviceId ? { deviceId: { exact: deviceId } } : {}), echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 }
+
+/** Znacznik czasu dla handlerów zdarzeń (poza renderem). */
+const timestamp = () => Date.now();
 
 function playable(p: DailyParticipant | undefined, kind: "video" | "audio"): MediaStreamTrack | null {
   const t = p?.tracks?.[kind];
@@ -74,10 +66,16 @@ export function Room({ session }: { session: SessionDetails }) {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [mics, setMics] = useState<MicOption[]>([]);
   const [micId, setMicId] = useState<string | undefined>(undefined);
-  const [volume, setVolume] = useState(readVolumePref);
   const [audioPanel, setAudioPanel] = useState(false);
+  // Stan połączenia z Daily – widoczny dla użytkownika, pomaga też w diagnozie.
+  const [inRoom, setInRoom] = useState(0);
+  const [netInterrupted, setNetInterrupted] = useState(false);
+  const [joinedAt, setJoinedAt] = useState<number | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
+  const credsRef = useRef<{ url: string; token: string } | null>(null);
   const [reporting, setReporting] = useState(false);
   const callRef = useRef<DailyCall | null>(null);
+  const reconnectingRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
   const signalled = useRef(false);
   const finished = useRef(false);
@@ -140,6 +138,7 @@ export function Room({ session }: { session: SessionDetails }) {
 
   const syncParticipants = useCallback((call: DailyCall) => {
     const all = call.participants();
+    setInRoom(Object.keys(all).length);
     const other = Object.values(all).find((p) => !p.local);
     if (other) {
       setPartnerEverJoined(true);
@@ -202,13 +201,24 @@ export function Room({ session }: { session: SessionDetails }) {
         .on("participant-left", sync)
         .on("track-started", sync)
         .on("track-stopped", sync)
-        .on("left-meeting", () => void finish())
-        .on("error", () => {
+        .on("network-connection", (ev) => {
+          console.info("[adh] network-connection", ev?.type, ev?.event);
+          setNetInterrupted(ev?.event === "interrupted");
+        })
+        .on("nonfatal-error", (ev) => console.warn("[adh] daily nonfatal-error", ev))
+        .on("left-meeting", () => {
+          if (!reconnectingRef.current) void finish();
+        })
+        .on("error", (ev) => {
+          console.error("[adh] daily error", ev);
           setError("Połączenie zostało przerwane. Spróbuj dołączyć ponownie.");
           setStage("error");
         });
+      credsRef.current = { url: res.url, token: res.token };
       await call.join({ url: res.url, token: res.token });
+      console.info("[adh] joined", res.url, "osób w pokoju:", Object.keys(call.participants()).length);
       sync();
+      setJoinedAt(timestamp());
       setStage("in-call");
     } catch {
       setError("Nie udało się połączyć z pokojem. Sprawdź internet i spróbuj ponownie.");
@@ -218,8 +228,9 @@ export function Room({ session }: { session: SessionDetails }) {
   }
 
   /**
-   * Gdy podłączone są słuchawki, przełącza na ich mikrofon – na Androidzie
-   * dopiero wtedy dźwięk rozmowy idzie do słuchawek, a nie do górnego głośniczka.
+   * Wybiera najlepsze miejsce dźwięku: słuchawki Bluetooth → przewodowe →
+   * telefon przy uchu → głośnik. Na Androidzie dźwięk rozmowy idzie tam,
+   * gdzie jest wybrany mikrofon.
    */
   async function preferHeadsetMic(stream: MediaStream): Promise<MediaStream> {
     const current = stream.getAudioTracks()[0];
@@ -262,12 +273,34 @@ export function Room({ session }: { session: SessionDetails }) {
     await callRef.current?.setInputDevicesAsync({ audioSource: track }).catch(() => undefined);
   }
 
-  function changeVolume(v: number) {
-    setVolume(v);
+  // Zabezpieczenie: co 2 s czytamy stan pokoju wprost z Daily, gdyby zdarzenie się zgubiło.
+  useEffect(() => {
+    if (stage !== "in-call" || demo) return;
+    const t = setInterval(() => {
+      const call = callRef.current;
+      if (call && call.meetingState() === "joined-meeting") syncParticipants(call);
+    }, 2000);
+    return () => clearInterval(t);
+  }, [stage, demo, syncParticipants]);
+
+  async function reconnect() {
+    const call = callRef.current;
+    const creds = credsRef.current;
+    if (!call || !creds) return;
+    setReconnecting(true);
+    reconnectingRef.current = true;
     try {
-      localStorage.setItem(VOLUME_KEY, String(v));
-    } catch {
-      // tylko na tę wizytę
+      await call.leave();
+      await call.join(creds);
+      syncParticipants(call);
+      setJoinedAt(timestamp());
+      setNetInterrupted(false);
+    } catch (err) {
+      console.error("[adh] reconnect", err);
+      setError("Nie udało się połączyć ponownie. Wyjdź i dołącz jeszcze raz.");
+    } finally {
+      reconnectingRef.current = false;
+      setReconnecting(false);
     }
   }
 
@@ -396,7 +429,7 @@ export function Room({ session }: { session: SessionDetails }) {
 
   return (
     <section className="flex flex-col gap-5">
-      {remote?.audio && <AudioSink track={remote.audio} volume={volume} />}
+      {remote?.audio && <AudioSink track={remote.audio} />}
 
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-lg font-bold text-accent">{copy.title}</p>
@@ -415,6 +448,26 @@ export function Room({ session }: { session: SessionDetails }) {
 
       {demo && (
         <Notice tone="warning">Tryb demonstracyjny: połączenie wideo nie jest skonfigurowane, partner Cię nie słyszy.</Notice>
+      )}
+
+      {!demo && (
+        <p className="text-center text-base text-muted" role="status">
+          {netInterrupted
+            ? "Połączenie przerwane – próbujemy wznowić…"
+            : `Połączono z pokojem · osób w pokoju: ${Math.min(inRoom, 2)} z 2`}
+        </p>
+      )}
+
+      {!demo && !remote && !noShow && joinedAt !== null && now.getTime() - joinedAt > 20_000 && (
+        <Notice>
+          <p className="mb-3">
+            Wciąż czekamy na: {session.partner.name}. Jeśli oboje jesteście już w pokoju, a się nie widzicie, połącz się
+            ponownie.
+          </p>
+          <Button variant="secondary" onClick={() => void reconnect()} disabled={reconnecting}>
+            <RefreshCw aria-hidden className="size-5" /> {reconnecting ? "Łączę…" : "Połącz ponownie"}
+          </Button>
+        </Notice>
       )}
 
       {noShow && !remote && (
@@ -500,46 +553,26 @@ export function Room({ session }: { session: SessionDetails }) {
         </Card>
       )}
 
-      <div className="flex flex-col gap-3">
-        <Button variant="secondary" onClick={() => setAudioPanel((v) => !v)} aria-expanded={audioPanel}>
-          <SlidersHorizontal aria-hidden /> Dźwięk i mikrofon
-        </Button>
-        {audioPanel && (
-          <Card className="flex flex-col gap-4">
-            <label className="flex flex-col gap-2">
-              <span className="font-bold">Głośność partnera: {Math.round(volume * 100)}%</span>
-              <input
-                type="range"
-                min={0.25}
-                max={3}
-                step={0.25}
-                value={volume}
-                onChange={(e) => changeVolume(Number(e.target.value))}
-                className="h-12 w-full accent-[var(--accent)]"
-              />
-            </label>
-            {mics.length > 1 && (
-              <label className="flex flex-col gap-2">
-                <span className="font-bold">Mikrofon</span>
-                <select
-                  value={micId}
-                  onChange={(e) => void switchMic(e.target.value)}
-                  className="min-h-12 rounded-xl border-2 border-border bg-surface px-3 text-text"
-                >
-                  {mics.map((m) => (
-                    <option key={m.deviceId} value={m.deviceId}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
-            <p className="text-base text-muted">
-              Słuchawki Bluetooth: wybierz ich mikrofon – na Androidzie dopiero wtedy dźwięk trafia do słuchawek.
-            </p>
-          </Card>
-        )}
-      </div>
+      {mics.length > 1 && (
+        <div className="flex flex-col gap-3">
+          <Button variant="secondary" onClick={() => setAudioPanel((v) => !v)} aria-expanded={audioPanel}>
+            <Headphones aria-hidden /> Gdzie słychać partnera?
+          </Button>
+          {audioPanel && (
+            <div role="radiogroup" aria-label="Gdzie słychać partnera" className="flex flex-col gap-2">
+              {mics.map((m) => (
+                <ChoiceTile
+                  key={m.deviceId}
+                  label={OUTPUT_LABELS[m.kind]}
+                  description={m.label}
+                  selected={micId === m.deviceId}
+                  onSelect={() => void switchMic(m.deviceId)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         {isVideo && (

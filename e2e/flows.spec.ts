@@ -223,7 +223,7 @@ test("pokój działa bez profilu partnera i zwalnia mikrofon po zakończeniu", a
   await expect.poll(liveTracks).toBe(0);
 });
 
-test("pokój: panel dźwięku – głośność partnera zapamiętana, dołączenie działa z wyborem mikrofonu", async ({ browser }) => {
+test("pokój: wybór, gdzie słychać partnera, przełącza mikrofon w trakcie rozmowy", async ({ browser }) => {
   const hela = await signUp(browser, "Hela");
   const igor = await signUp(browser, "Igor");
   await startInstant(hela, "Gotowanie", "25", "Tylko głos");
@@ -232,16 +232,14 @@ test("pokój: panel dźwięku – głośność partnera zapamiętana, dołączen
 
   await hela.getByRole("button", { name: "Dołącz do sesji" }).click();
   await expect(hela.getByRole("timer")).toBeVisible();
+  await expect(hela.getByRole("slider")).toHaveCount(0);
 
-  await hela.getByRole("button", { name: "Dźwięk i mikrofon" }).click();
-  const slider = hela.getByRole("slider");
-  await expect(hela.getByText("Głośność partnera: 100%")).toBeVisible();
-  await slider.fill("2");
-  await expect(hela.getByText("Głośność partnera: 200%")).toBeVisible();
+  await hela.getByRole("button", { name: "Gdzie słychać partnera?" }).click();
+  const options = hela.getByRole("radiogroup", { name: "Gdzie słychać partnera" }).getByRole("radio");
+  expect(await options.count()).toBeGreaterThan(1);
+  await options.nth(1).click();
+  await expect(options.nth(1)).toHaveAttribute("aria-checked", "true");
+  await expect(hela.getByRole("timer")).toBeVisible();
+  await expect(hela.getByText("Nie udało się przełączyć mikrofonu")).toHaveCount(0);
   await expectNoA11yViolations(hela);
-
-  await hela.reload();
-  await hela.getByRole("button", { name: "Dołącz do sesji" }).click();
-  await hela.getByRole("button", { name: "Dźwięk i mikrofon" }).click();
-  await expect(hela.getByText("Głośność partnera: 200%")).toBeVisible();
 });
