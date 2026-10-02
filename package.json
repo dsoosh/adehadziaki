@@ -5,14 +5,16 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "bash scripts/start-standalone.sh",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:db": "bash scripts/test-db.sh",
     "test:e2e": "playwright test",
     "icons": "node scripts/generate-icons.mjs",
-    "db:migrate": "bash scripts/migrate.sh"
+    "db:migrate": "bash scripts/migrate.sh",
+    "railway:plan": "npx --yes @railway/cli@5.63.1 config plan",
+    "railway:apply": "npx --yes @railway/cli@5.63.1 config apply"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.92.2",
@@ -35,6 +37,7 @@
     "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "railway": "3.12.0",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^5.0.3"

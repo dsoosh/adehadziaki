@@ -1,0 +1,57 @@
+# Konfiguracja Railway z .railway/railway.ts (Infrastructure as Code).
+# PR: podgląd zmian (plan). Push do main: zastosowanie (apply).
+# Wymaga sekretu RAILWAY_TOKEN (token projektu, środowisko production):
+# Railway → Project Settings → Tokens; GitHub → Settings → Secrets → Actions.
+name: Railway config
+
+on:
+  pull_request:
+    paths: [".railway/**", "scripts/**", "package.json", "package-lock.json", ".github/workflows/railway.yml"]
+  push:
+    branches: [main]
+    paths: [".railway/**", "scripts/**", "package.json", "package-lock.json", ".github/workflows/railway.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: railway-config
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  RAILWAY_CLI: "@railway/cli@5.63.1"
+
+jobs:
+  config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Sprawdź typy konfiguracji
+        run: npx tsc --noEmit
+
+      - name: Brak tokenu
+        if: env.RAILWAY_TOKEN == ''
+        run: |
+          echo "::warning::Brak sekretu RAILWAY_TOKEN – pomijam plan/apply Railway."
+
+      - name: Plan (podgląd zmian)
+        if: env.RAILWAY_TOKEN != ''
+        run: npx --yes "$RAILWAY_CLI" config plan
+
+      # Bez --confirm-destructive: usunięcie zmiennej, domeny czy usługi
+      # zatrzyma job – takie zmiany stosuje się świadomie, lokalnie.
+      - name: Apply
+        if: env.RAILWAY_TOKEN != '' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: npx --yes "$RAILWAY_CLI" config apply --yes

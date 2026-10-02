@@ -34,7 +34,7 @@ Do E2E z przeglądarką spoza Playwrighta ustaw `CHROMIUM_PATH`. Przepływy z lo
 
 ### 1. Supabase
 1. Utwórz projekt w regionie **Frankfurt (eu-central-1)**.
-2. Migracje (tabele, RLS, funkcje) wgrywa **Railway przy każdym wdrożeniu** – patrz sekcja 4 (Railway), punkt 4. Ręcznie: `npm run db:migrate` z ustawionym `SUPABASE_DB_URL` albo `npx supabase link --project-ref <ref> && npx supabase db push`.
+2. Migracje (tabele, RLS, funkcje) wgrywa **Railway przy każdym wdrożeniu** – patrz sekcja 4 (Railway), punkt 3. Ręcznie: `npm run db:migrate` z ustawionym `SUPABASE_DB_URL` albo `npx supabase link --project-ref <ref> && npx supabase db push`.
 3. Authentication → URL Configuration: *Site URL* = adres z Railway, *Redirect URLs* = `https://<domena>/auth/callback`.
 4. Logowanie i rejestracja przez Google:
    - [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **OAuth consent screen**: typ *External*, nazwa aplikacji, e-mail kontaktowy; zakresy `email`, `profile`, `openid`.
@@ -50,11 +50,20 @@ Załóż konto, skopiuj klucz API (Developers) do `DAILY_API_KEY`. Pokoje tworz�
 `npx web-push generate-vapid-keys` → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`; ustaw `VAPID_SUBJECT` (mailto) i losowy `CRON_SECRET`.
 
 ### 4. Railway
-1. New Project → Deploy from GitHub repo → to repozytorium. Build i start są w [`railway.json`](railway.json) (Next.js `standalone`, healthcheck `/api/health`). Start idzie przez `scripts/start-standalone.sh`, który ustawia `HOSTNAME=0.0.0.0` – bez tego serwer nasłuchuje tylko na nazwie kontenera i Railway zwraca „Application failed to respond”.
-2. Variables: wszystkie zmienne z [`.env.example`](.env.example); `NEXT_PUBLIC_SITE_URL` = publiczna domena serwisu. Zmienne `NEXT_PUBLIC_*` są wbudowywane przy buildzie – po ich zmianie zrób redeploy.
-3. Settings → Networking → Generate Domain (lub własna domena).
-4. **Migracje bazy:** dodaj zmienną `SUPABASE_DB_URL` – w Supabase kliknij **Connect** → **Session pooler** i skopiuj adres `postgresql://postgres.<ref>:[HASŁO]@aws-…pooler.supabase.com:5432/postgres` (wstaw hasło bazy; znaki specjalne zakoduj, np. `@` → `%40`). `preDeployCommand` w `railway.json` uruchamia `scripts/migrate.sh` przed każdym wdrożeniem; wgrywa tylko nowe migracje, a błąd przerywa wdrożenie (stara wersja działa dalej).
+Konfiguracja usługi jest w repozytorium jako **Infrastructure as Code**: [`.railway/railway.ts`](.railway/railway.ts) (dawny `railway.json` jest wycofany przez Railway). Plik opisuje źródło (`main`), build, komendę startu, migracje przed wdrożeniem, healthcheck, domenę z portem 8080 i listę zmiennych. Wartości zmiennych żyją tylko w Railway – w pliku są oznaczone `preserve()`.
+
+1. New Project → Deploy from GitHub repo → to repozytorium; usługa i projekt muszą nazywać się `adehadziaki` (tak jak w pliku).
+2. Variables: ustaw wartości wszystkich zmiennych z [`.env.example`](.env.example); `NEXT_PUBLIC_SITE_URL` = publiczna domena serwisu. Zmienne `NEXT_PUBLIC_*` są wbudowywane przy buildzie – po ich zmianie zrób redeploy. Nowa zmienna = dopisz ją też do listy w `.railway/railway.ts`, inaczej `apply` będzie chciało ją usunąć.
+3. **Migracje bazy:** `SUPABASE_DB_URL` – w Supabase kliknij **Connect** → **Session pooler** i skopiuj adres `postgresql://postgres.<ref>:[HASŁO]@aws-…pooler.supabase.com:5432/postgres` (wstaw hasło bazy; znaki specjalne zakoduj, np. `@` → `%40`). Przed każdym wdrożeniem `scripts/migrate.sh` wgrywa nowe migracje; błąd przerywa wdrożenie (stara wersja działa dalej).
    - Jeśli migracje były wcześniej wklejone ręcznie w SQL Editor, oznacz je raz jako wgrane: `npx supabase migration repair --status applied 20261002000000 20261003000000 --db-url "$SUPABASE_DB_URL"`.
+4. **Pierwsze zastosowanie konfiguracji (lokalnie, raz):**
+   ```bash
+   npx --yes @railway/cli@5.63.1 login
+   npx --yes @railway/cli@5.63.1 link      # projekt adehadziaki, środowisko production, usługa adehadziaki
+   npm run railway:plan                     # przejrzyj zmiany – nic nie powinno być usuwane
+   npm run railway:apply
+   ```
+5. **Automatyzacja:** Railway → Project Settings → **Tokens** → utwórz token dla środowiska `production`; w GitHubie → Settings → Secrets and variables → Actions dodaj go jako `RAILWAY_TOKEN`. Od tej pory [workflow](.github/workflows/railway.yml) pokazuje plan przy każdym PR i stosuje zmiany po merge do `main`. Zmiany usuwające (zmienne, domeny, usługi) zatrzymują workflow – takie stosuje się świadomie lokalnie (`npm run railway:apply`).
 
 ### 5. Przypomnienia (pg_cron)
 W Supabase SQL Editor uruchom [`supabase/cron.sql`](supabase/cron.sql) z podmienionym adresem Railway i `CRON_SECRET`. Co minutę wywoła `/api/cron/tick`, który wysyła przypomnienia 10 min i 1 min przed zaplanowaną sesją.

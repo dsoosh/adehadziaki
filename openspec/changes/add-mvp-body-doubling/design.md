@@ -20,7 +20,7 @@ Repozytorium startuje od zera. Motywacja i zakres: patrz `proposal.md`; wymagani
 ## Decisions
 
 ### D1. Next.js 16 (App Router) jako jedna aplikacja, `output: "standalone"` na Railway
-Strony renderowane po stronie serwera + Route Handlers dla operacji wymagających sekretów (Daily, push, cron). Railway buduje obraz z `package.json` (Railpack) i uruchamia `node .next/standalone/server.js`; plik `railway.json` ustawia komendę startu i healthcheck `/api/health`.
+Strony renderowane po stronie serwera + Route Handlers dla operacji wymagających sekretów (Daily, push, cron). Railway buduje obraz z `package.json` (Railpack) i uruchamia `scripts/start-standalone.sh` (serwer standalone na `0.0.0.0:$PORT`). Konfiguracja usługi jest kodem w `.railway/railway.ts` (Railway Infrastructure as Code; Config as Code / `railway.json` jest przez Railway wycofany): start, `preDeploy` z migracjami Supabase, healthcheck `/api/health`, domena i lista zmiennych z `preserve()`. Zmiany stosuje GitHub Actions (`railway config plan` przy PR, `apply` po merge do `main`).
 *Alternatywy:* osobny backend (Fastify) – więcej serwisów do utrzymania; Vercel – odrzucony na rzecz Railway zgodnie z decyzją zespołu.
 
 ### D2. Supabase: Auth + Postgres z RLS, logika łączenia w funkcjach SQL
@@ -81,7 +81,7 @@ Wszystkie znaczniki w bazie w UTC (`timestamptz`); sloty liczone i prezentowane 
 
 1. Utworzyć projekt Supabase (region Frankfurt), uruchomić migracje z `supabase/migrations/` (`supabase db push`), włączyć dostawcę Google i ustawić adresy przekierowań.
 2. Utworzyć konto Daily (region UE), wygenerować klucze VAPID (`npx web-push generate-vapid-keys`).
-3. Railway: nowy projekt z repozytorium GitHub, zmienne z `.env.example`, domena; healthcheck `/api/health`.
+3. Railway: nowy projekt z repozytorium GitHub, zmienne z `.env.example`; pierwsze `railway config apply` lokalnie, potem sekret `RAILWAY_TOKEN` dla GitHub Actions.
 4. W Supabase ustawić `pg_cron` z adresem Railway i `CRON_SECRET`.
 Wycofanie: Railway umożliwia powrót do poprzedniego wdrożenia; migracje są addytywne.
 
