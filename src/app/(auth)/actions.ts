@@ -1,7 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { siteUrl } from "@/lib/env";
+import { headers } from "next/headers";
+import { publicOrigin } from "@/lib/public-origin";
 import { safeNext } from "@/lib/safe-next";
 import { supabaseServer } from "@/lib/supabase/server";
 import { validateDisplayName, validateEmail, validatePassword } from "@/lib/validation";
@@ -14,6 +15,13 @@ export type FormState = {
 };
 
 const str = (fd: FormData, key: string) => String(fd.get(key) ?? "");
+
+/** Publiczny adres aplikacji (linki w e-mailach i powrót z Google). */
+async function siteUrl(): Promise<string> {
+  const h = await headers();
+  const proto = h.get("x-forwarded-proto")?.split(",")[0] ?? "http";
+  return publicOrigin(h, `${proto}://${h.get("host") ?? "localhost:3000"}`);
+}
 
 export async function signUp(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd, "email").trim();
@@ -36,7 +44,7 @@ export async function signUp(_prev: FormState, fd: FormData): Promise<FormState>
     email,
     password,
     options: {
-      emailRedirectTo: `${siteUrl()}/auth/callback?next=/start`,
+      emailRedirectTo: `${await siteUrl()}/auth/callback?next=/start`,
       data: { display_name: displayName, accepted_terms_at: new Date().toISOString() },
     },
   });
@@ -79,7 +87,7 @@ export async function sendMagicLink(_prev: FormState, fd: FormData): Promise<For
   const supabase = await supabaseServer();
   await supabase.auth.signInWithOtp({
     email,
-    options: { shouldCreateUser: false, emailRedirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { shouldCreateUser: false, emailRedirectTo: `${await siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   return { ok: true, message: "Jeśli masz u nas konto, link do logowania jest już w Twojej skrzynce." };
 }
@@ -89,7 +97,7 @@ export async function signInWithGoogle(fd: FormData) {
   const supabase = await supabaseServer();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${await siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error || !data.url) redirect("/logowanie?blad=google");
   redirect(data.url);
@@ -100,7 +108,7 @@ export async function requestPasswordReset(_prev: FormState, fd: FormData): Prom
   const err = validateEmail(email);
   if (err) return { errors: { email: err }, values: { email } };
   const supabase = await supabaseServer();
-  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${siteUrl()}/auth/callback?next=/nowe-haslo` });
+  await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${await siteUrl()}/auth/callback?next=/nowe-haslo` });
   return { ok: true, message: "Jeśli masz u nas konto, wysłaliśmy link do ustawienia nowego hasła." };
 }
 

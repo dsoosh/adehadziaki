@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { publicOrigin } from "@/lib/public-origin";
 import { SUPABASE_ANON_KEY, SUPABASE_URL, supabaseConfigured } from "@/lib/env";
 
 const PROTECTED = ["/start", "/teraz", "/zaplanuj", "/sesje", "/sesja", "/profil", "/witaj"];
@@ -34,17 +35,13 @@ export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   if (!user && matches(pathname, PROTECTED)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/logowanie";
+    const url = new URL("/logowanie", publicOrigin(request.headers, request.nextUrl.origin));
     url.search = `?next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
 
   if (user && matches(pathname, AUTH_PAGES)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/start";
-    url.search = "";
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL("/start", publicOrigin(request.headers, request.nextUrl.origin)));
   }
 
   return response;

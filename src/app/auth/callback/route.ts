@@ -1,11 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { publicOrigin } from "@/lib/public-origin";
 import { safeNext } from "@/lib/safe-next";
 import { supabaseServer } from "@/lib/supabase/server";
 
 /** Powrót z linku e-mail (potwierdzenie, link magiczny, reset hasła) i z logowania Google. */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  const origin = publicOrigin(request.headers, request.nextUrl.origin);
   const next = safeNext(searchParams.get("next"));
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
