@@ -2,10 +2,11 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { sendMagicLink, signInWithGoogle, signInWithPassword, type FormState } from "@/app/(auth)/actions";
+import { sendMagicLink, signInWithPassword, type FormState } from "@/app/(auth)/actions";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Notice } from "@/components/ui/notice";
+import { GoogleButton, OrDivider } from "./google-button";
 
 export function LoginForm({ next, linkError }: { next: string; linkError?: boolean }) {
   const [mode, setMode] = useState<"password" | "link">("password");
@@ -19,7 +20,14 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
       {mode === "password" ? (
         <form action={pwAction} className="flex flex-col gap-5">
           <input type="hidden" name="next" value={next} />
-          <Field label="E-mail" name="email" type="email" autoComplete="email" required defaultValue={pwState.values?.email} />
+          <Field
+            label="E-mail"
+            name="email"
+            type="email"
+            autoComplete="email"
+            required
+            defaultValue={pwState.values?.email}
+          />
           <Field label="Hasło" name="password" type="password" autoComplete="current-password" required />
           {pwState.message && <Notice tone="danger">{pwState.message}</Notice>}
           <Button type="submit" block disabled={pwPending}>
@@ -50,22 +58,18 @@ export function LoginForm({ next, linkError }: { next: string; linkError?: boole
           <Button type="submit" block disabled={linkPending}>
             {linkPending ? "Wysyłanie…" : "Wyślij link do logowania"}
           </Button>
-          <button type="button" className="min-h-12 self-start font-bold text-accent" onClick={() => setMode("password")}>
+          <button
+            type="button"
+            className="min-h-12 self-start font-bold text-accent"
+            onClick={() => setMode("password")}
+          >
             Wolę zalogować się hasłem
           </button>
         </form>
       )}
 
-      <div className="flex items-center gap-3 text-muted" aria-hidden>
-        <span className="h-px flex-1 bg-border" /> albo <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <form action={signInWithGoogle}>
-        <input type="hidden" name="next" value={next} />
-        <Button type="submit" variant="secondary" block>
-          Zaloguj się przez Google
-        </Button>
-      </form>
+      <OrDivider />
+      <GoogleButton next={next} label="Zaloguj się przez Google" />
 
       <p className="text-center">
         Nie masz konta?{" "}

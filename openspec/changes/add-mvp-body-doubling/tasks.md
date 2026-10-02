@@ -23,6 +23,7 @@
 - [x] 4.1 Klienci Supabase (przeglądarka/serwer) i `src/proxy.ts` chroniący trasy aplikacji z parametrem powrotu; zweryfikować przekierowanie niezalogowanego na `/logowanie?next=…`
 - [x] 4.2 Strony rejestracji (zgoda RODO), logowania (hasło, link magiczny, Google), resetu hasła i callback auth; zweryfikować E2E rejestrację i logowanie na lokalnym Supabase
 - [x] 4.3 Strona profilu: nazwa (2–30 znaków), domyślny tryb, powiadomienia, instrukcja instalacji iOS, wylogowanie, usunięcie konta z potwierdzeniem; zweryfikować walidację nazwy testem jednostkowym
+- [x] 4.4 Przycisk „Załóż konto przez Google” na rejestracji, ekran powitalny `/witaj` (nazwa + zgoda) wymuszany dla kont bez zgody, funkcja `accept_terms`; zweryfikować testem SQL i E2E konta bez zgody
 
 ## 5. Kreator i łączenie natychmiastowe (session-setup, instant-matching)
 

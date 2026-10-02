@@ -36,7 +36,11 @@ Do E2E z przeglądarką spoza Playwrighta ustaw `CHROMIUM_PATH`. Przepływy z lo
 1. Utwórz projekt w regionie **Frankfurt (eu-central-1)**.
 2. `npx supabase link --project-ref <ref>` i `npx supabase db push` – zakłada tabele, RLS i funkcje.
 3. Authentication → URL Configuration: *Site URL* = adres z Railway, *Redirect URLs* = `https://<domena>/auth/callback`.
-4. (Opcjonalnie) Authentication → Providers → Google: włącz i podaj klucze OAuth z Google Cloud.
+4. Logowanie i rejestracja przez Google:
+   - [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **OAuth consent screen**: typ *External*, nazwa aplikacji, e-mail kontaktowy; zakresy `email`, `profile`, `openid`.
+   - **Credentials → Create credentials → OAuth client ID** → *Web application*. W *Authorized redirect URIs* wpisz `https://<ref-projektu>.supabase.co/auth/v1/callback` (dokładny adres pokazuje Supabase przy włączaniu dostawcy).
+   - Supabase → Authentication → **Providers → Google**: włącz, wklej *Client ID* i *Client Secret*, zapisz.
+   - Osoby zakładające konto przez Google przy pierwszym wejściu potwierdzają nazwę i akceptują regulamin na ekranie `/witaj`.
 5. Authentication → Email Templates: przetłumacz treści e-maili na polski.
 
 ### 2. Daily.co

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
 import { expectNoA11yViolations, signUp, startInstant, supabaseReady } from "./helpers";
 
 test.skip(!supabaseReady, "Wymaga lokalnego Supabase (npx supabase start) i zmiennych w .env.local");
@@ -104,7 +105,7 @@ test("wylogowanie i ponowne logowanie hasłem z powrotem na żądaną stronę", 
   await page.getByLabel("E-mail").fill(email);
   await page.getByLabel("Hasło").fill("bardzo-tajne-haslo");
   await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Załóż konto" }).click();
+  await page.getByRole("button", { name: "Załóż konto", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Co robimy?" })).toBeVisible();
 
   await page.goto("/profil");
@@ -121,5 +122,47 @@ test("wylogowanie i ponowne logowanie hasłem z powrotem na żądaną stronę", 
   await page.getByLabel("Hasło").fill("bardzo-tajne-haslo");
   await page.getByRole("button", { name: "Zaloguj się", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Moje sesje" })).toBeVisible();
+  await context.close();
+});
+
+test("konto z Google bez zgody musi przejść ekran powitalny", async ({ browser }) => {
+  // Tak wygląda konto po pierwszym logowaniu Google: brak zgody w metadanych.
+  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+  const email = `google-${Date.now()}@test.pl`;
+  const { error } = await admin.auth.admin.createUser({
+    email,
+    password: "bardzo-tajne-haslo",
+    email_confirm: true,
+    user_metadata: { full_name: "Gosia Kowalska", given_name: "Gosia" },
+  });
+  expect(error).toBeNull();
+
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await page.goto("/rejestracja");
+  await expect(page.getByRole("button", { name: "Załóż konto przez Google" })).toBeVisible();
+
+  await page.goto("/logowanie");
+  await page.getByLabel("E-mail").fill(email);
+  await page.getByLabel("Hasło").fill("bardzo-tajne-haslo");
+  await page.getByRole("button", { name: "Zaloguj się", exact: true }).click();
+  await expect(page).toHaveURL(/\/witaj\?next=%2Fstart/);
+  await expect(page.getByLabel("Jak mamy Cię nazywać?")).toHaveValue("Gosia");
+  await expectNoA11yViolations(page);
+
+  // Bez zgody nie da się wejść do aplikacji
+  await page.goto("/teraz");
+  await expect(page).toHaveURL(/\/witaj\?next=%2Fteraz/);
+  await page.getByRole("button", { name: "Zaczynamy" }).click();
+  await expect(page.getByText("Aby korzystać z aplikacji, zaakceptuj regulamin")).toBeVisible();
+
+  await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "Zaczynamy" }).click();
+  await expect(page.getByRole("heading", { name: "Co chcesz zrobić?" })).toBeVisible();
+  await page.goto("/start");
+  await expect(page.getByRole("heading", { name: "Co robimy?" })).toBeVisible();
+  await expect(page.getByText("Cześć, Gosia!")).toBeVisible();
   await context.close();
 });

@@ -139,6 +139,22 @@ do $$ begin
 exception when check_violation then raise notice 'ok - za krótka nazwa odrzucona';
 end $$;
 
+-- Zgoda dla kont z Google (bez accepted_terms_at w metadanych)
+select set_config('request.jwt.claim.sub', :'d', false);
+select pg_temp.ok((select accepted_terms_at from profiles) is null, 'konto bez zgody ma pustą datę akceptacji');
+do $$ begin
+  perform accept_terms('X');
+  raise exception 'FAIL: przyjęto za krótką nazwę w accept_terms';
+exception when sqlstate '22023' then raise notice 'ok - accept_terms odrzuca za krótką nazwę';
+end $$;
+select accept_terms('  Dorota ');
+select pg_temp.ok((select accepted_terms_at is not null and display_name = 'Dorota' from profiles), 'accept_terms zapisuje zgodę i nazwę');
+do $$ begin
+  update profiles set accepted_terms_at = null;
+  raise exception 'FAIL: użytkownik może sam zmienić datę zgody';
+exception when insufficient_privilege then raise notice 'ok - datę zgody zmienia tylko accept_terms';
+end $$;
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();

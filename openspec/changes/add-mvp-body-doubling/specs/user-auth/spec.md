@@ -21,6 +21,17 @@ System SHALL umożliwić założenie konta podając adres e-mail, hasło (min. 8
 - **WHEN** osoba podaje e-mail, dla którego istnieje konto
 - **THEN** system nie ujawnia, czy konto istnieje, i pokazuje ten sam komunikat co przy poprawnej rejestracji
 
+### Requirement: Rejestracja przez Google
+System SHALL umożliwić założenie konta kontem Google z ekranu rejestracji. Przed pierwszym użyciem aplikacji osoba MUST potwierdzić nazwę wyświetlaną i zaakceptować regulamin oraz politykę prywatności; do tego czasu strony aplikacji MUST przekierowywać na ekran powitalny.
+
+#### Scenario: Pierwsze wejście przez Google
+- **WHEN** osoba wybiera „Załóż konto przez Google” i loguje się kontem Google po raz pierwszy
+- **THEN** widzi ekran „Witaj!” z nazwą wstępnie uzupełnioną imieniem z Google i polem zgody
+
+#### Scenario: Brak zgody blokuje aplikację
+- **WHEN** osoba z kontem Google bez zaakceptowanego regulaminu otwiera stronę „Zacznij teraz”
+- **THEN** system przekierowuje ją na ekran powitalny, a po akceptacji z powrotem na „Zacznij teraz”
+
 ### Requirement: Logowanie
 System SHALL umożliwić logowanie e-mailem i hasłem, jednorazowym linkiem wysłanym e-mailem (link magiczny) oraz kontem Google. Po zalogowaniu użytkownik MUST trafić na ekran startowy aplikacji.
 

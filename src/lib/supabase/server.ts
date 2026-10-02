@@ -35,9 +35,13 @@ export type Profile = {
   display_name: string;
   default_mode: "video" | "audio";
   push_enabled: boolean;
+  accepted_terms_at: string | null;
 };
 
-/** Zalogowany użytkownik i jego profil; bez logowania przekierowuje. */
+/**
+ * Zalogowany użytkownik i jego profil. Bez logowania przekierowuje do logowania,
+ * a bez zgody na regulamin (konto z Google) – do ekranu powitalnego.
+ */
 export async function requireUser(nextPath = "/start") {
   const supabase = await supabaseServer();
   const {
@@ -46,8 +50,9 @@ export async function requireUser(nextPath = "/start") {
   if (!user) redirect(`/logowanie?next=${encodeURIComponent(nextPath)}`);
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, default_mode, push_enabled")
+    .select("id, display_name, default_mode, push_enabled, accepted_terms_at")
     .eq("id", user.id)
     .single<Profile>();
+  if (profile && !profile.accepted_terms_at) redirect(`/witaj?next=${encodeURIComponent(nextPath)}`);
   return { supabase, user, profile };
 }

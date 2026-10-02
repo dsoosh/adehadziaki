@@ -22,7 +22,7 @@ test("formularz rejestracji wymaga zgody i jest dostępny", async ({ page }) => 
   await page.getByLabel("Jak mamy Cię nazywać?").fill("Ola");
   await page.getByLabel("E-mail").fill("ola@example.pl");
   await page.getByLabel("Hasło").fill("12345678");
-  await page.getByRole("button", { name: "Załóż konto" }).click();
+  await page.getByRole("button", { name: "Załóż konto", exact: true }).click();
   await expect(page.getByText("Aby założyć konto, zaakceptuj regulamin")).toBeVisible();
 });
 

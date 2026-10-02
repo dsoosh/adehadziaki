@@ -15,7 +15,7 @@ export async function signUp(browser: Browser, name: string): Promise<Page> {
   await page.getByLabel("E-mail").fill(uniqueEmail(name.toLowerCase()));
   await page.getByLabel("Hasło").fill("bardzo-tajne-haslo");
   await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "Załóż konto" }).click();
+  await page.getByRole("button", { name: "Załóż konto", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Co robimy?" })).toBeVisible();
   return page;
 }

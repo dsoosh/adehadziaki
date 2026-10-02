@@ -119,3 +119,18 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+export async function acceptTerms(_prev: FormState, fd: FormData): Promise<FormState> {
+  const displayName = str(fd, "displayName").trim();
+  const next = safeNext(str(fd, "next"));
+  const errors: FormState["errors"] = {};
+  const nameError = validateDisplayName(displayName);
+  if (nameError) errors.displayName = nameError;
+  if (fd.get("terms") !== "on") errors.terms = "Aby korzystać z aplikacji, zaakceptuj regulamin i politykę prywatności.";
+  if (Object.keys(errors).length) return { errors, values: { displayName } };
+
+  const supabase = await supabaseServer();
+  const { error } = await supabase.rpc("accept_terms", { p_display_name: displayName });
+  if (error) return { message: "Nie udało się zapisać. Spróbuj ponownie.", values: { displayName } };
+  redirect(next);
+}
