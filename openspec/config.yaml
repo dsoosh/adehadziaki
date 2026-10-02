@@ -1,0 +1,25 @@
+schema: spec-driven
+
+context: |
+  Language: pl
+  All artifacts must be written in pl.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Produkt: "adehadziaki" – polska aplikacja do body doublingu (podobna do Focusmate).
+  Użytkownik wybiera czynność (praca, nauka, sprzątanie, spacer, prace ogrodowe itd.)
+  i czas trwania, a system dobiera mu partnera do wspólnej sesji wideo lub audio 1:1.
+  Grupa docelowa: dorośli w Polsce z ADHD lub trudnościami ze skupieniem.
+  Cel MVP: szybka weryfikacja pomysłu, dlatego aplikacja jest PWA.
+
+  Stos: Next.js 16 (App Router, TypeScript, Tailwind CSS 4), Supabase Cloud
+  (Auth, Postgres z RLS, Realtime; region UE), Daily.co (wideo/audio),
+  hosting aplikacji na Railway (output standalone).
+  Konwencje: UI wyłącznie po polsku (pl-PL), strefa czasowa Europe/Warsaw,
+  dostępność WCAG 2.2 AA, projekt przyjazny osobom z ADHD (jedna decyzja na ekran,
+  spokojne barwy, brak rozpraszaczy). Dane osobowe zgodnie z RODO.
+
+rules:
+  proposal:
+    - Zawsze wypisz, co jest poza zakresem
+  tasks:
+    - Zadania dziel na kawałki możliwe do zrobienia w maks. 2 godziny
