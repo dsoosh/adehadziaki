@@ -38,8 +38,9 @@ jobs:
 
       - run: npm ci
 
-      - name: Sprawdź typy konfiguracji
-        run: npx tsc --noEmit
+      # typecheck = next typegen + tsc: typy tras (PageProps itd.) generuje Next.js.
+      - name: Sprawdź typy (w tym .railway/railway.ts)
+        run: npm run typecheck
 
       - name: Brak tokenu
         if: env.RAILWAY_TOKEN == ''
