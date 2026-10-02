@@ -46,7 +46,7 @@ Załóż konto, skopiuj klucz API (Developers) do `DAILY_API_KEY`. Pokoje tworz�
 `npx web-push generate-vapid-keys` → `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`; ustaw `VAPID_SUBJECT` (mailto) i losowy `CRON_SECRET`.
 
 ### 4. Railway
-1. New Project → Deploy from GitHub repo → to repozytorium. Build i start są w [`railway.json`](railway.json) (Next.js `standalone`, healthcheck `/api/health`).
+1. New Project → Deploy from GitHub repo → to repozytorium. Build i start są w [`railway.json`](railway.json) (Next.js `standalone`, healthcheck `/api/health`). Start idzie przez `scripts/start-standalone.sh`, który ustawia `HOSTNAME=0.0.0.0` – bez tego serwer nasłuchuje tylko na nazwie kontenera i Railway zwraca „Application failed to respond”.
 2. Variables: wszystkie zmienne z [`.env.example`](.env.example); `NEXT_PUBLIC_SITE_URL` = publiczna domena serwisu. Zmienne `NEXT_PUBLIC_*` są wbudowywane przy buildzie – po ich zmianie zrób redeploy.
 3. Settings → Networking → Generate Domain (lub własna domena).
 

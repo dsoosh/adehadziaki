@@ -5,7 +5,7 @@
     "buildCommand": "npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/"
   },
   "deploy": {
-    "startCommand": "node .next/standalone/server.js",
+    "startCommand": "bash scripts/start-standalone.sh",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
