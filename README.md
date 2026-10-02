@@ -34,7 +34,7 @@ Do E2E z przeglądarką spoza Playwrighta ustaw `CHROMIUM_PATH`. Przepływy z lo
 
 ### 1. Supabase
 1. Utwórz projekt w regionie **Frankfurt (eu-central-1)**.
-2. Migracje (tabele, RLS, funkcje) wgrywa **Railway przy każdym wdrożeniu** – patrz krok 4.3. Ręcznie: `npm run db:migrate` z ustawionym `SUPABASE_DB_URL` albo `npx supabase link --project-ref <ref> && npx supabase db push`.
+2. Migracje (tabele, RLS, funkcje) wgrywa **Railway przy każdym wdrożeniu** – patrz sekcja 4 (Railway), punkt 4. Ręcznie: `npm run db:migrate` z ustawionym `SUPABASE_DB_URL` albo `npx supabase link --project-ref <ref> && npx supabase db push`.
 3. Authentication → URL Configuration: *Site URL* = adres z Railway, *Redirect URLs* = `https://<domena>/auth/callback`.
 4. Logowanie i rejestracja przez Google:
    - [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **OAuth consent screen**: typ *External*, nazwa aplikacji, e-mail kontaktowy; zakresy `email`, `profile`, `openid`.
