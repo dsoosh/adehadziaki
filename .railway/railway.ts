@@ -19,6 +19,7 @@ const VARIABLES = [
   "VAPID_PRIVATE_KEY",
   "VAPID_SUBJECT",
   "CRON_SECRET",
+  "ADMIN_EMAILS",
 ] as const;
 
 export default defineRailway(() => {

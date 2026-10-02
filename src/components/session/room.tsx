@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
-import { Bell, BellOff, Flag, Headphones, Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff } from "lucide-react";
+import { Bell, BellOff, Copy, Flag, Headphones, Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff } from "lucide-react";
 import { getActivity, MODE_LABELS } from "@/lib/activities";
 import { micOptions, OUTPUT_LABELS, preferredMic, type MicOption } from "@/lib/audio-devices";
 import { NETWORK_ERROR } from "@/lib/errors";
@@ -376,6 +376,9 @@ export function Room({ session }: { session: SessionDetails }) {
     );
   }
 
+  const isTest = session.kind === "test";
+  const testNotice = isTest && <TestSessionNotice />;
+
   const partnerCard = (
     <Card className="flex flex-col gap-1">
       <p className="text-sm text-muted">Twój partner</p>
@@ -391,6 +394,7 @@ export function Room({ session }: { session: SessionDetails }) {
     return (
       <section className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold">Gotowy do sesji?</h1>
+        {testNotice}
         {partnerCard}
         <p className="text-muted">
           {myActivity.label} · {session.duration} min · {MODE_LABELS[session.mode]}
@@ -430,6 +434,7 @@ export function Room({ session }: { session: SessionDetails }) {
   return (
     <section className="flex flex-col gap-5">
       {remote?.audio && <AudioSink track={remote.audio} />}
+      {testNotice}
 
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-lg font-bold text-accent">{copy.title}</p>
@@ -581,10 +586,38 @@ export function Room({ session }: { session: SessionDetails }) {
             Sygnał 2 min przed końcem: {soundOn ? "włączony" : "wyłączony"}
           </button>
         )}
-        <button type="button" onClick={() => setReporting(true)} className="flex min-h-12 items-center gap-2 text-muted">
-          <Flag aria-hidden className="size-5" /> Zgłoś problem
-        </button>
+        {!isTest && (
+          <button type="button" onClick={() => setReporting(true)} className="flex min-h-12 items-center gap-2 text-muted">
+            <Flag aria-hidden className="size-5" /> Zgłoś problem
+          </button>
+        )}
       </div>
     </section>
+  );
+}
+
+/** Sesja testowa admina: drugi uczestnik to ten sam użytkownik na innym urządzeniu. */
+function TestSessionNotice() {
+  const [copied, setCopied] = useState(false);
+  return (
+    <Notice tone="warning">
+      <p className="mb-3">
+        <strong>Sesja testowa.</strong> Otwórz ten adres na drugim urządzeniu (albo w drugiej karcie) i dołącz tam –
+        połączysz się sam ze sobą.
+      </p>
+      <Button
+        variant="secondary"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            setCopied(true);
+          } catch {
+            setCopied(false);
+          }
+        }}
+      >
+        <Copy aria-hidden className="size-5" /> {copied ? "Skopiowano" : "Kopiuj link"}
+      </Button>
+    </Notice>
   );
 }

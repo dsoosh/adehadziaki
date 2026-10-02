@@ -82,30 +82,32 @@ export function AfterSession({ session, reported }: { session: SessionDetails; r
         </div>
       )}
 
-      <div className="flex flex-col items-start gap-1 border-t-2 border-border pt-4">
-        {blocked ? (
-          <p className="text-muted">Nie połączymy Cię więcej z: {session.partner.name}.</p>
-        ) : (
-          <Button
-            variant="ghost"
-            className="px-0"
-            disabled={pending}
-            onClick={() =>
-              start(async () => {
-                const res = await blockPartner(session.id);
-                if (res.ok) setBlocked(true);
-              })
-            }
-          >
-            Nie łącz mnie więcej z tą osobą
-          </Button>
-        )}
-        {!justReported && (
-          <Button variant="ghost" className="px-0" onClick={() => setReporting(true)}>
-            Zgłoś problem
-          </Button>
-        )}
-      </div>
+      {session.kind !== "test" && (
+        <div className="flex flex-col items-start gap-1 border-t-2 border-border pt-4">
+          {blocked ? (
+            <p className="text-muted">Nie połączymy Cię więcej z: {session.partner.name}.</p>
+          ) : (
+            <Button
+              variant="ghost"
+              className="px-0"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const res = await blockPartner(session.id);
+                  if (res.ok) setBlocked(true);
+                })
+              }
+            >
+              Nie łącz mnie więcej z tą osobą
+            </Button>
+          )}
+          {!justReported && (
+            <Button variant="ghost" className="px-0" onClick={() => setReporting(true)}>
+              Zgłoś problem
+            </Button>
+          )}
+        </div>
+      )}
     </section>
   );
 }

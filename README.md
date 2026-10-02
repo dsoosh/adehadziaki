@@ -65,6 +65,9 @@ Konfiguracja usługi jest w repozytorium jako **Infrastructure as Code**: [`.rai
    ```
 5. **Automatyzacja:** Railway → Project Settings → **Tokens** → utwórz token dla środowiska `production`; w GitHubie → Settings → Secrets and variables → Actions dodaj go jako `RAILWAY_TOKEN`. Od tej pory [workflow](.github/workflows/railway.yml) pokazuje plan przy każdym PR i stosuje zmiany po merge do `main`. Zmiany usuwające (zmienne, domeny, usługi) zatrzymują workflow – takie stosuje się świadomie lokalnie (`npm run railway:apply`).
 
+### Test połączenia (administrator)
+Ustaw w Railway `ADMIN_EMAILS` (e-maile po przecinku). Osoba z listy ma w **Profilu** sekcję „Test połączenia”: „Test z kamerą” / „Test głosowy” otwiera pokój, w którym jest po obu stronach. Ten sam adres otwórz na drugim urządzeniu albo w drugiej karcie (przycisk „Kopiuj link”) i dołącz – sprawdzisz kamerę, dźwięk, słuchawki i połączenie przez Daily bez drugiej osoby.
+
 ### 5. Przypomnienia (pg_cron)
 W Supabase SQL Editor uruchom [`supabase/cron.sql`](supabase/cron.sql) z podmienionym adresem Railway i `CRON_SECRET`. Co minutę wywoła `/api/cron/tick`, który wysyła przypomnienia 10 min i 1 min przed zaplanowaną sesją.
 

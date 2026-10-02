@@ -33,7 +33,8 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sessions/[id]/
       roomName: room.name,
       // Daily pokazuje tę nazwę drugiej osobie – tylko imię + inicjał.
       userName: shortName(session.me.name),
-      userId: user.id,
+      // W sesji testowej to samo konto wchodzi dwa razy – każde wejście z osobnym id.
+      userId: session.kind === "test" ? crypto.randomUUID() : user.id,
       endsAt,
       audioOnly: session.mode === "audio",
     });

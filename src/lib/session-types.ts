@@ -6,7 +6,7 @@ type RawSessionSide = Omit<SessionSide, "name"> & { name: string | null };
 
 export type SessionDetails = {
   id: string;
-  kind: "instant" | "scheduled";
+  kind: "instant" | "scheduled" | "test";
   duration: 25 | 50 | 75;
   mode: CallMode;
   starts_at: string;

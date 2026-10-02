@@ -27,6 +27,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}/api/health`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
-    env: { NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}` },
+    env: { NEXT_PUBLIC_SITE_URL: `http://localhost:${PORT}`, ADMIN_EMAILS: "admin.e2e@test.pl" },
   },
 });

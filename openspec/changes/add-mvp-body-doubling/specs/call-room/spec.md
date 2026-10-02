@@ -58,3 +58,14 @@ Po upływie czasu sesji system MUST zakończyć rozmowę i przenieść obu uczes
 #### Scenario: Koniec czasu
 - **WHEN** licznik dochodzi do 00:00
 - **THEN** rozmowa zostaje rozłączona, a uczestnicy widzą ekran „Koniec sesji”
+
+### Requirement: Sesja testowa dla administratora
+Osoba z listy administratorów SHALL móc z profilu uruchomić sesję testową (z kamerą lub tylko głosową), w której jest po obu stronach. Ten sam adres pokoju otwarty na drugim urządzeniu lub w drugiej karcie MUST łączyć się z tym samym pokojem rozmowy. Sesja testowa MUST NOT pojawiać się na liście czekających ani u innych osób, a zgłaszanie i blokowanie MUST być w niej niedostępne. Pozostałe osoby MUST NOT mieć tej opcji.
+
+#### Scenario: Test na dwóch urządzeniach
+- **WHEN** administrator wybiera w profilu „Test z kamerą”, a potem otwiera skopiowany link pokoju na telefonie
+- **THEN** oba urządzenia dołączają do tego samego pokoju i widzą się nawzajem
+
+#### Scenario: Zwykły użytkownik
+- **WHEN** osoba spoza listy administratorów otwiera profil
+- **THEN** nie widzi sekcji „Test połączenia”

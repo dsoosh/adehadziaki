@@ -251,6 +251,23 @@ select pg_temp.ok((select status from my_bookings() where id = :'hb') = 'matched
 select set_config('request.jwt.claim.sub', :'g2', false);
 select pg_temp.ok(book_with(:'hb', 'praca') ->> 'status' = 'taken', 'zajęta rezerwacja daje taken');
 
+-- Sesje testowe admina (ta sama osoba po obu stronach)
+reset role;
+do $$ begin
+  insert into sessions (kind, user_a, user_b, activity_a, activity_b, duration, mode, starts_at, ends_at)
+  select 'instant', id, id, 'inne', 'inne', 25, 'video', now(), now() + interval '25 minutes' from auth.users limit 1;
+  raise exception 'FAIL: zwykła sesja z jedną osobą przyjęta';
+exception when check_violation then raise notice 'ok - zwykła sesja wymaga dwóch różnych osób';
+end $$;
+insert into sessions (kind, user_a, user_b, activity_a, activity_b, duration, mode, starts_at, ends_at)
+values ('test', :'a', :'a', 'inne', 'inne', 25, 'audio', now(), now() + interval '25 minutes')
+returning id as sid_test \gset
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'a', false);
+select pg_temp.ok(get_session(:'sid_test') ->> 'kind' = 'test', 'admin widzi swoją sesję testową');
+select set_config('request.jwt.claim.sub', :'b', false);
+select pg_temp.ok(get_session(:'sid_test') is null, 'inni nie widzą sesji testowej');
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();

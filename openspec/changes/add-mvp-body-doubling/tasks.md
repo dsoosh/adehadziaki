@@ -65,3 +65,9 @@
 - [x] 12.1 Migracja: `short_name`, `ticket` w kolejce, `lobby()`, `instant_join_ticket`, `book_with`; skrócone nazwy w `get_session` i `my_bookings`; zweryfikować testami SQL (prywatność, blokady, gone/taken) i testem wyścigu dwóch gości
 - [x] 12.2 Lista „Czekają teraz” i „Zaplanowane – szukają partnera” na ekranie startowym oraz ekran `/dolacz`; zweryfikować E2E dołączenia teraz, do zaplanowanej sesji i „ktoś był szybszy” z audytem axe
 - [x] 12.3 Imię + inicjał także w tokenie Daily i przypomnieniach (`shortName`); zweryfikować testem jednostkowym i E2E, że pełna nazwa nie jest widoczna dla partnera
+
+## 13. Test połączenia dla administratora
+
+- [x] 13.1 Migracja: rodzaj sesji `test` z tą samą osobą po obu stronach; zweryfikować testem SQL (zwykła sesja wymaga dwóch osób, test widoczny tylko dla właściciela)
+- [x] 13.2 `ADMIN_EMAILS`, sekcja „Test połączenia” w profilu, informacja z „Kopiuj link” w pokoju, osobne id w tokenie Daily dla każdego wejścia; zweryfikować testem jednostkowym `isAdmin` i E2E na dwóch kontekstach przeglądarki
+
