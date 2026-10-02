@@ -10,11 +10,19 @@ const MESSAGES: Record<string, string> = {
 };
 
 export const NETWORK_ERROR = "Nie udało się połączyć. Sprawdź internet i spróbuj ponownie.";
+export const SERVER_ERROR = "Coś poszło nie tak po naszej stronie. Spróbuj ponownie za chwilę.";
 
-export function toUserMessage(error: { message?: string } | null | undefined): string {
+type ErrorLike = { message?: string; code?: string } | null | undefined;
+
+export function toUserMessage(error: ErrorLike): string {
   if (!error?.message) return NETWORK_ERROR;
   for (const [code, msg] of Object.entries(MESSAGES)) {
     if (error.message.includes(code)) return msg;
+  }
+  // Odpowiedź z kodem (PostgREST / Postgres) = serwer odpowiedział, więc to nie wina internetu.
+  if (error.code) {
+    console.error("Błąd serwera:", error.code, error.message);
+    return SERVER_ERROR;
   }
   return NETWORK_ERROR;
 }
