@@ -222,3 +222,26 @@ test("pokój działa bez profilu partnera i zwalnia mikrofon po zakończeniu", a
   await expect(ania.getByRole("heading", { name: "Koniec sesji" })).toBeVisible();
   await expect.poll(liveTracks).toBe(0);
 });
+
+test("pokój: panel dźwięku – głośność partnera zapamiętana, dołączenie działa z wyborem mikrofonu", async ({ browser }) => {
+  const hela = await signUp(browser, "Hela");
+  const igor = await signUp(browser, "Igor");
+  await startInstant(hela, "Gotowanie", "25", "Tylko głos");
+  await startInstant(igor, "Gotowanie", "25", "Tylko głos");
+  await expect(hela).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
+
+  await hela.getByRole("button", { name: "Dołącz do sesji" }).click();
+  await expect(hela.getByRole("timer")).toBeVisible();
+
+  await hela.getByRole("button", { name: "Dźwięk i mikrofon" }).click();
+  const slider = hela.getByRole("slider");
+  await expect(hela.getByText("Głośność partnera: 100%")).toBeVisible();
+  await slider.fill("2");
+  await expect(hela.getByText("Głośność partnera: 200%")).toBeVisible();
+  await expectNoA11yViolations(hela);
+
+  await hela.reload();
+  await hela.getByRole("button", { name: "Dołącz do sesji" }).click();
+  await hela.getByRole("button", { name: "Dźwięk i mikrofon" }).click();
+  await expect(hela.getByText("Głośność partnera: 200%")).toBeVisible();
+});

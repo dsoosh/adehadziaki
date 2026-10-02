@@ -19,11 +19,46 @@ export function VideoTile({ track, mirror, className }: { track: MediaStreamTrac
   );
 }
 
-export function AudioSink({ track }: { track: MediaStreamTrack | null }) {
+/**
+ * Dźwięk partnera. Do 100% zwykły element <audio>; powyżej – wzmocnienie przez
+ * Web Audio (GainNode), bo element nie potrafi grać głośniej niż 100%.
+ * Element zostaje wtedy wyciszony – Chrome wymaga podpięcia zdalnej ścieżki
+ * do elementu, żeby Web Audio dostało dźwięk.
+ */
+export function AudioSink({ track, volume = 1 }: { track: MediaStreamTrack | null; volume?: number }) {
   const ref = useRef<HTMLAudioElement>(null);
+  const boosted = volume > 1;
+
   useEffect(() => {
     if (ref.current) ref.current.srcObject = track ? new MediaStream([track]) : null;
   }, [track]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.muted = boosted;
+    if (!boosted) el.volume = Math.max(0, Math.min(1, volume));
+  }, [boosted, volume]);
+
+  const ctxRef = useRef<{ ctx: AudioContext; gain: GainNode } | null>(null);
+  useEffect(() => {
+    if (!boosted || !track) return;
+    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    const ctx = new Ctx();
+    const gain = ctx.createGain();
+    ctx.createMediaStreamSource(new MediaStream([track])).connect(gain).connect(ctx.destination);
+    ctxRef.current = { ctx, gain };
+    void ctx.resume();
+    return () => {
+      ctxRef.current = null;
+      void ctx.close();
+    };
+  }, [boosted, track]);
+
+  useEffect(() => {
+    if (ctxRef.current) ctxRef.current.gain.gain.value = volume;
+  }, [volume, boosted, track]);
+
   return <audio ref={ref} autoPlay />;
 }
 

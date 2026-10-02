@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
-import { Bell, BellOff, Flag, Mic, MicOff, PhoneOff, Video, VideoOff } from "lucide-react";
+import { Bell, BellOff, Flag, Mic, MicOff, PhoneOff, SlidersHorizontal, Video, VideoOff } from "lucide-react";
 import { getActivity, MODE_LABELS } from "@/lib/activities";
+import { micOptions, preferredMic, type MicOption } from "@/lib/audio-devices";
 import { NETWORK_ERROR } from "@/lib/errors";
 import { PHASE_COPY, partnerNoShow, roomWindow, sessionPhase } from "@/lib/session-phase";
 import { choiceToSearch } from "@/lib/session-params";
@@ -32,6 +33,23 @@ function readSoundPref(): boolean {
   }
 }
 
+const VOLUME_KEY = "adh:volume";
+
+function readVolumePref(): number {
+  if (typeof window === "undefined") return 1;
+  try {
+    const v = Number(localStorage.getItem(VOLUME_KEY));
+    return v >= 0.25 && v <= 3 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
+/** Mikrofon o podanym id (lub domyślny), z redukcją echa i szumów. */
+function micConstraints(deviceId?: string): MediaTrackConstraints {
+  return { ...(deviceId ? { deviceId: { exact: deviceId } } : {}), echoCancellation: true, noiseSuppression: true, autoGainControl: true };
+}
+
 function playable(p: DailyParticipant | undefined, kind: "video" | "audio"): MediaStreamTrack | null {
   const t = p?.tracks?.[kind];
   return t && (t.state === "playable" || t.state === "loading") ? (t.persistentTrack ?? null) : null;
@@ -54,6 +72,10 @@ export function Room({ session }: { session: SessionDetails }) {
   const [camOn, setCamOn] = useState(isVideo);
   const [soundOn, setSoundOn] = useState(readSoundPref);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [mics, setMics] = useState<MicOption[]>([]);
+  const [micId, setMicId] = useState<string | undefined>(undefined);
+  const [volume, setVolume] = useState(readVolumePref);
+  const [audioPanel, setAudioPanel] = useState(false);
   const [reporting, setReporting] = useState(false);
   const callRef = useRef<DailyCall | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -132,7 +154,8 @@ export function Room({ session }: { session: SessionDetails }) {
     setStage("requesting");
     let stream: MediaStream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: isVideo });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(), video: isVideo });
+      stream = await preferHeadsetMic(stream);
     } catch (err) {
       const name = (err as DOMException).name;
       setStage(name === "NotAllowedError" || name === "SecurityError" ? "denied" : "error");
@@ -191,6 +214,60 @@ export function Room({ session }: { session: SessionDetails }) {
       setError("Nie udało się połączyć z pokojem. Sprawdź internet i spróbuj ponownie.");
       setStage("error");
       await teardown();
+    }
+  }
+
+  /**
+   * Gdy podłączone są słuchawki, przełącza na ich mikrofon – na Androidzie
+   * dopiero wtedy dźwięk rozmowy idzie do słuchawek, a nie do górnego głośniczka.
+   */
+  async function preferHeadsetMic(stream: MediaStream): Promise<MediaStream> {
+    const current = stream.getAudioTracks()[0];
+    let options: MicOption[] = [];
+    try {
+      options = micOptions(await navigator.mediaDevices.enumerateDevices());
+    } catch {
+      return stream;
+    }
+    setMics(options);
+    const currentId = current?.getSettings().deviceId;
+    const target = preferredMic(options, currentId);
+    setMicId(target ?? currentId);
+    if (!target) return stream;
+    try {
+      const fresh = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(target) });
+      current?.stop();
+      return new MediaStream([...fresh.getAudioTracks(), ...stream.getVideoTracks()]);
+    } catch {
+      return stream;
+    }
+  }
+
+  async function switchMic(deviceId: string) {
+    setMicId(deviceId);
+    let fresh: MediaStream;
+    try {
+      fresh = await navigator.mediaDevices.getUserMedia({ audio: micConstraints(deviceId) });
+    } catch {
+      setError("Nie udało się przełączyć mikrofonu. Spróbuj wybrać inny.");
+      return;
+    }
+    const track = fresh.getAudioTracks()[0];
+    track.enabled = micOn;
+    const old = streamRef.current;
+    old?.getAudioTracks().forEach((t) => t.stop());
+    const next = new MediaStream([track, ...(old?.getVideoTracks() ?? [])]);
+    streamRef.current = next;
+    setLocalStream(next);
+    await callRef.current?.setInputDevicesAsync({ audioSource: track }).catch(() => undefined);
+  }
+
+  function changeVolume(v: number) {
+    setVolume(v);
+    try {
+      localStorage.setItem(VOLUME_KEY, String(v));
+    } catch {
+      // tylko na tę wizytę
     }
   }
 
@@ -319,7 +396,7 @@ export function Room({ session }: { session: SessionDetails }) {
 
   return (
     <section className="flex flex-col gap-5">
-      {remote?.audio && <AudioSink track={remote.audio} />}
+      {remote?.audio && <AudioSink track={remote.audio} volume={volume} />}
 
       <div className="flex flex-col items-center gap-2 text-center">
         <p className="text-lg font-bold text-accent">{copy.title}</p>
@@ -375,9 +452,12 @@ export function Room({ session }: { session: SessionDetails }) {
             <Avatar name={session.me.name} />
             <p className="font-bold">Ty</p>
           </div>
-          <div className={cn("flex flex-col items-center gap-2", !remote && "opacity-50")}>
-            <Avatar name={session.partner.name} />
-            <p className="font-bold">{remote ? remote.name : "Czekamy…"}</p>
+          <div className="flex flex-col items-center gap-2">
+            {/* Przygaszony tylko awatar – tekst musi zachować pełny kontrast. */}
+            <div className={cn(!remote && "opacity-50")}>
+              <Avatar name={session.partner.name} />
+            </div>
+            <p className={cn("font-bold", !remote && "text-muted")}>{remote ? remote.name : "Czekamy…"}</p>
           </div>
         </div>
       )}
@@ -419,6 +499,47 @@ export function Room({ session }: { session: SessionDetails }) {
           </div>
         </Card>
       )}
+
+      <div className="flex flex-col gap-3">
+        <Button variant="secondary" onClick={() => setAudioPanel((v) => !v)} aria-expanded={audioPanel}>
+          <SlidersHorizontal aria-hidden /> Dźwięk i mikrofon
+        </Button>
+        {audioPanel && (
+          <Card className="flex flex-col gap-4">
+            <label className="flex flex-col gap-2">
+              <span className="font-bold">Głośność partnera: {Math.round(volume * 100)}%</span>
+              <input
+                type="range"
+                min={0.25}
+                max={3}
+                step={0.25}
+                value={volume}
+                onChange={(e) => changeVolume(Number(e.target.value))}
+                className="h-12 w-full accent-[var(--accent)]"
+              />
+            </label>
+            {mics.length > 1 && (
+              <label className="flex flex-col gap-2">
+                <span className="font-bold">Mikrofon</span>
+                <select
+                  value={micId}
+                  onChange={(e) => void switchMic(e.target.value)}
+                  className="min-h-12 rounded-xl border-2 border-border bg-surface px-3 text-text"
+                >
+                  {mics.map((m) => (
+                    <option key={m.deviceId} value={m.deviceId}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <p className="text-base text-muted">
+              Słuchawki Bluetooth: wybierz ich mikrofon – na Androidzie dopiero wtedy dźwięk trafia do słuchawek.
+            </p>
+          </Card>
+        )}
+      </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2">
         {isVideo && (
