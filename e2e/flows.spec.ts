@@ -166,3 +166,59 @@ test("konto z Google bez zgody musi przejść ekran powitalny", async ({ browser
   await expect(page.getByText("Cześć, Gosia!")).toBeVisible();
   await context.close();
 });
+
+test("pokój działa bez profilu partnera i zwalnia mikrofon po zakończeniu", async ({ browser }) => {
+  const ania = await signUp(browser, "Ania");
+  const bartek = await signUp(browser, "Bartek");
+
+  // Zapamiętujemy wszystkie strumienie z kamery/mikrofonu, żeby sprawdzić ich zwolnienie.
+  await ania.addInitScript(() => {
+    const w = window as unknown as { __streams: MediaStream[] };
+    w.__streams = [];
+    const original = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    navigator.mediaDevices.getUserMedia = async (c) => {
+      const s = await original(c);
+      w.__streams.push(s);
+      return s;
+    };
+  });
+
+  await startInstant(ania, "Nauka", "25", "Kamera i głos");
+  await startInstant(bartek, "Nauka", "25", "Kamera i głos");
+  await expect(ania).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
+
+  // Partner bez profilu (np. konto sprzed migracji lub usunięte).
+  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+  const { error } = await admin.from("profiles").delete().eq("display_name", "Bartek");
+  expect(error).toBeNull();
+  await ania.reload();
+
+  await expect(ania.getByText("Partner", { exact: true }).first()).toBeVisible();
+  await ania.getByRole("button", { name: "Dołącz do sesji" }).click();
+  await expect(ania.getByRole("timer")).toBeVisible();
+
+  const liveTracks = () =>
+    ania.evaluate(() =>
+      (window as unknown as { __streams: MediaStream[] }).__streams
+        .flatMap((s) => s.getTracks())
+        .filter((t) => t.readyState === "live").length,
+    );
+  expect(await liveTracks()).toBeGreaterThan(0);
+
+  // Wyjście z pokoju w trakcie rozmowy (nawigacja w aplikacji) też musi zwolnić urządzenia.
+  await ania.getByRole("link", { name: "Moje sesje" }).click();
+  await expect(ania.getByRole("heading", { name: "Moje sesje" })).toBeVisible();
+  await expect.poll(liveTracks).toBe(0);
+
+  // …i tak samo zwykłe zakończenie sesji.
+  await ania.goBack();
+  await ania.getByRole("button", { name: "Dołącz do sesji" }).click();
+  await expect(ania.getByRole("timer")).toBeVisible();
+  expect(await liveTracks()).toBeGreaterThan(0);
+  await ania.getByRole("button", { name: "Zakończ" }).click();
+  await ania.getByRole("button", { name: "Tak, zakończ" }).click();
+  await expect(ania.getByRole("heading", { name: "Koniec sesji" })).toBeVisible();
+  await expect.poll(liveTracks).toBe(0);
+});

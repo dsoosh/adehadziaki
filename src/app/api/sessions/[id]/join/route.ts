@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createMeetingToken, dailyConfigured, ensureRoom } from "@/lib/daily";
 import { canIssueToken } from "@/lib/session-phase";
-import type { JoinResponse, SessionDetails } from "@/lib/session-types";
+import { normalizeSession, type JoinResponse, type RawSessionDetails } from "@/lib/session-types";
 import { supabaseServer } from "@/lib/supabase/server";
 
 /** Wydaje dostęp do pokoju rozmowy wyłącznie uczestnikom sesji, w oknie czasowym sesji. */
@@ -14,7 +14,7 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sessions/[id]/
   if (!user) return NextResponse.json<JoinResponse>({ error: "Zaloguj się ponownie." }, { status: 401 });
 
   const { data } = await supabase.rpc("get_session", { p_session: id });
-  const session = data as SessionDetails | null;
+  const session = normalizeSession(data as RawSessionDetails | null);
   if (!session) return NextResponse.json<JoinResponse>({ error: "To nie jest Twoja sesja." }, { status: 404 });
 
   const startsAt = new Date(session.starts_at);

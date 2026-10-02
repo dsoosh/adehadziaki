@@ -56,6 +56,7 @@ export function Room({ session }: { session: SessionDetails }) {
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [reporting, setReporting] = useState(false);
   const callRef = useRef<DailyCall | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const signalled = useRef(false);
   const finished = useRef(false);
 
@@ -64,17 +65,27 @@ export function Room({ session }: { session: SessionDetails }) {
     return () => clearInterval(t);
   }, []);
 
+  /**
+   * Zwalnia mikrofon i kamerę. Strumień jest w refie, a nie tylko w stanie:
+   * przy wyjściu ze strony komponent jest odmontowywany i aktualizacje stanu
+   * nie są już wykonywane, więc zatrzymanie musi nastąpić bezpośrednio.
+   */
   const teardown = useCallback(async () => {
     const call = callRef.current;
     callRef.current = null;
+    const tracks = new Set<MediaStreamTrack>(streamRef.current?.getTracks() ?? []);
+    streamRef.current = null;
+    if (call) {
+      // Daily mogło użyć kopii ścieżek – zatrzymujemy też te z lokalnego uczestnika.
+      const local = call.participants()?.local;
+      for (const t of [local?.tracks?.audio?.persistentTrack, local?.tracks?.video?.persistentTrack]) if (t) tracks.add(t);
+    }
+    tracks.forEach((t) => t.stop());
+    setLocalStream(null);
     if (call) {
       await call.leave().catch(() => undefined);
       await call.destroy().catch(() => undefined);
     }
-    setLocalStream((s) => {
-      s?.getTracks().forEach((t) => t.stop());
-      return null;
-    });
   }, []);
 
   useEffect(() => () => void teardown(), [teardown]);
@@ -128,6 +139,7 @@ export function Room({ session }: { session: SessionDetails }) {
       if (name === "NotFoundError") setError(isVideo ? "Nie znaleźliśmy mikrofonu lub kamery." : "Nie znaleźliśmy mikrofonu.");
       return;
     }
+    streamRef.current = stream;
     setLocalStream(stream);
     setStage("joining");
 
@@ -142,6 +154,7 @@ export function Room({ session }: { session: SessionDetails }) {
       setError(res.error);
       setStage("error");
       stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
       setLocalStream(null);
       return;
     }

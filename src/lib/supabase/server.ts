@@ -53,6 +53,7 @@ export async function requireUser(nextPath = "/start") {
     .select("id, display_name, default_mode, push_enabled, accepted_terms_at")
     .eq("id", user.id)
     .single<Profile>();
-  if (profile && !profile.accepted_terms_at) redirect(`/witaj?next=${encodeURIComponent(nextPath)}`);
-  return { supabase, user, profile };
+  // Brak profilu (konto sprzed migracji) lub brak zgody – ekran powitalny je uzupełni.
+  if (!profile?.accepted_terms_at) redirect(`/witaj?next=${encodeURIComponent(nextPath)}`);
+  return { supabase, user, profile: profile as Profile };
 }

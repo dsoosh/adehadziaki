@@ -27,7 +27,7 @@ export function AudioSink({ track }: { track: MediaStreamTrack | null }) {
   return <audio ref={ref} autoPlay />;
 }
 
-export function Avatar({ name, speaking }: { name: string; speaking?: boolean }) {
+export function Avatar({ name, speaking }: { name?: string | null; speaking?: boolean }) {
   return (
     <div
       className={cn(
@@ -36,7 +36,7 @@ export function Avatar({ name, speaking }: { name: string; speaking?: boolean })
       )}
       aria-hidden
     >
-      {name.slice(0, 1).toUpperCase()}
+      {name?.trim().slice(0, 1).toUpperCase() || "?"}
     </div>
   );
 }

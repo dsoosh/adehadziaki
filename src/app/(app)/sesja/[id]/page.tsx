@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Room } from "@/components/session/room";
 import { ButtonLink } from "@/components/ui/button";
 import { Page } from "@/components/ui/page";
-import type { SessionDetails } from "@/lib/session-types";
+import { normalizeSession, type RawSessionDetails } from "@/lib/session-types";
 import { requireUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Sesja" };
@@ -11,7 +11,7 @@ export default async function SessionPage(props: PageProps<"/sesja/[id]">) {
   const { id } = await props.params;
   const { supabase } = await requireUser(`/sesja/${id}`);
   const { data } = await supabase.rpc("get_session", { p_session: id });
-  const session = data as SessionDetails | null;
+  const session = normalizeSession(data as RawSessionDetails | null);
 
   if (!session) {
     return (

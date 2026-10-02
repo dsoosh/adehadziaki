@@ -155,6 +155,31 @@ do $$ begin
 exception when insufficient_privilege then raise notice 'ok - datę zgody zmienia tylko accept_terms';
 end $$;
 
+-- Konta bez profilu (sprzed migracji init) i nazwy z zapasem
+reset role;
+alter table auth.users disable trigger on_auth_user_created;
+insert into auth.users (email, raw_user_meta_data) values ('stary@test.pl', '{"full_name":"Stefan Stary"}');
+alter table auth.users enable trigger on_auth_user_created;
+select id as old from auth.users where email = 'stary@test.pl' \gset
+select pg_temp.ok(not exists (select 1 from profiles where id = :'old'), 'konto sprzed migracji nie ma profilu');
+select pg_temp.ok(backfill_profiles() = 1, 'backfill zakłada brakujący profil');
+select pg_temp.ok((select display_name = 'Stefan Stary' and accepted_terms_at is null from profiles where id = :'old'),
+  'backfill bierze nazwę z metadanych i wymaga zgody');
+delete from profiles where id = :'old';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'old', false);
+select accept_terms('Stefan');
+select pg_temp.ok((select display_name = 'Stefan' and accepted_terms_at is not null from profiles), 'accept_terms zakłada brakujący profil');
+
+reset role;
+delete from profiles where id = :'c';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'a', false);
+select pg_temp.ok(get_session(:'sid_ac') -> 'partner' ->> 'name' = 'Partner', 'brak profilu partnera daje nazwę „Partner”');
+reset role;
+insert into profiles (id, display_name, accepted_terms_at) values (:'c', 'Celina', now());
+set role authenticated;
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();
