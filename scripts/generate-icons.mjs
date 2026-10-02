@@ -12,7 +12,7 @@ async function render(size, file, padding = 0) {
   await page.setViewportSize({ width: size, height: size });
   const inner = size - padding * 2;
   await page.setContent(
-    `<html><body style="margin:0;background:#2f5fd0;display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px">
+    `<html><body style="margin:0;background:#4a6b57;display:flex;align-items:center;justify-content:center;width:${size}px;height:${size}px">
       <div style="width:${inner}px;height:${inner}px">${svg.replace("<svg ", `<svg width="${inner}" height="${inner}" `)}</div>
     </body></html>`,
   );

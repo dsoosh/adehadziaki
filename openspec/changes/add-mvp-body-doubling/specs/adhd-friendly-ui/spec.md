@@ -21,7 +21,7 @@ Tekst MUST mieć kontrast co najmniej 4,5:1 względem tła (WCAG AA), bazowy roz
 - **THEN** audyt nie zgłasza błędów kontrastu ani zbyt małych celów dotykowych
 
 ### Requirement: Spokojna paleta i tryb ciemny
-Interfejs MUST używać ograniczonej palety: ciepłe, jasne tło, ciemny tekst, jeden kolor akcentu (spokojny niebieski) oraz kolory stanu wyłącznie dla komunikatów. Interfejs MUST respektować systemowy tryb ciemny.
+Interfejs MUST używać ograniczonej, stonowanej palety: ciepłe kremowe tło, ciemny (nie czarny) tekst, jeden przygaszony kolor akcentu (szałwiowa zieleń) oraz ziemiste kolory stanu wyłącznie dla komunikatów. Interfejs MUST NOT używać jaskrawych kolorów podstawowych ani neonów i MUST respektować systemowy tryb ciemny.
 
 #### Scenario: Tryb ciemny
 - **WHEN** system operacyjny użytkownika ma włączony tryb ciemny

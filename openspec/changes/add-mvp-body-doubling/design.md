@@ -52,18 +52,20 @@ Service worker (`public/sw.js`, pisany ręcznie – bez wtyczek, które nie wspi
 *Alternatywa:* cron Railway – minimalny interwał zbyt duży dla przypomnień „za 1 minutę”.
 
 ### D8. UI: Tailwind 4 + własne komponenty, tokeny w CSS
-Tokeny kolorów jako zmienne CSS na `:root` z wariantem ciemnym; czcionka Atkinson Hyperlegible (`next/font/google`), 18 px bazowo. Komponenty: `Button`, `ChoiceTile`, `StepHeader`, `Card`, `Notice`, `Timer`. Teksty w `src/lib/copy.ts`. Paleta:
+Tokeny kolorów jako zmienne CSS na `:root` z wariantem ciemnym; czcionka Atkinson Hyperlegible (`next/font/google`), 18 px bazowo. Komponenty: `Button`, `ChoiceTile`, `StepHeader`, `Card`, `Notice`, `Timer`. Teksty w `src/lib/copy.ts`. Paleta stonowana, przyjazna osobom z ADHD: ciepłe kremowe tło, przygaszona szałwiowa zieleń jako jedyny akcent, ziemiste kolory stanu (ochra, terakota) zamiast jaskrawych. Tekst ma kontrast ok. 10:1 zamiast „czerni na bieli” (~15:1) – mniej ostry, nadal powyżej WCAG AA; każdą parę sprawdza `src/lib/theme.test.ts`.
 
 | token | jasny | ciemny |
 |---|---|---|
-| `--bg` | `#F7F5F0` | `#14181D` |
-| `--surface` | `#FFFFFF` | `#1E242B` |
-| `--text` | `#1F2933` | `#E6E8EB` |
-| `--muted` | `#52606D` | `#A7B0BA` |
-| `--accent` | `#2F5FD0` | `#8FB0FF` |
-| `--success` | `#2E7D5B` | `#7BD3A8` |
-| `--warning` | `#9A4A00` | `#F5B971` |
-| `--danger` | `#B42318` | `#F59A93` |
+| `--bg` | `#F3F0E8` | `#1B201D` |
+| `--surface` | `#FAF8F3` | `#232925` |
+| `--text` | `#2F3A34` | `#E3E6E0` |
+| `--muted` | `#59625B` | `#A8B0A8` |
+| `--accent` | `#4A6B57` (szałwia) | `#9DBFA8` |
+| `--success` | `#3D6649` | `#A6CCB0` |
+| `--warning` | `#85582A` (ochra) | `#D9B48C` |
+| `--danger` | `#9A4636` (terakota) | `#E3A596` |
+
+*Alternatywa:* chłodny niebieski akcent (pierwsza wersja) – odrzucony jako zbyt intensywny; jaskrawe kolory podstawowe i neony mogą nadmiernie pobudzać.
 
 ### D9. Czas i strefy
 Wszystkie znaczniki w bazie w UTC (`timestamptz`); sloty liczone i prezentowane w `Europe/Warsaw` przez `Intl.DateTimeFormat` (bez dodatkowych bibliotek). Logika slotów w czystych funkcjach (`src/lib/slots.ts`) pokrytych testami Vitest.
