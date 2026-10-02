@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Headphones, Video } from "lucide-react";
 import { getActivity, MODE_LABELS, type CallMode } from "@/lib/activities";
+import { VIDEO_ENABLED } from "@/lib/features";
 import type { LobbyData } from "@/lib/lobby-types";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { dayLabel, formatElapsed, formatTime } from "@/lib/time";
@@ -108,10 +109,12 @@ export function LobbyCard(props: {
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-lg font-bold">{props.name}</span>
         <span className="flex flex-wrap items-center gap-x-2 text-muted">
-          {activity.label} · {props.duration} min ·
-          <span className="inline-flex items-center gap-1">
-            <ModeIcon aria-hidden className="size-4" /> {MODE_LABELS[props.mode]}
-          </span>
+          {activity.label} · {props.duration} min
+          {VIDEO_ENABLED && (
+            <span className="inline-flex items-center gap-1">
+              · <ModeIcon aria-hidden className="size-4" /> {MODE_LABELS[props.mode]}
+            </span>
+          )}
         </span>
       </span>
       <span className="shrink-0 text-right text-base font-bold text-muted tabular-nums first-letter:uppercase">

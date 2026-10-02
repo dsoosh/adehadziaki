@@ -9,6 +9,7 @@ import {
   SprayCan,
   type LucideIcon,
 } from "lucide-react";
+import { VIDEO_ENABLED } from "./features";
 
 export type ActivityId =
   | "praca"
@@ -62,6 +63,12 @@ export const MODE_LABELS: Record<CallMode, string> = {
 };
 
 /** Tryb wstępnie zaznaczony w kreatorze: w ruchu audio, inaczej domyślny z profilu. */
-export function suggestedMode(activity: ActivityId, profileDefault: CallMode): CallMode {
+export function suggestedMode(activity: ActivityId, profileDefault: CallMode, videoEnabled = VIDEO_ENABLED): CallMode {
+  if (!videoEnabled) return "audio";
   return getActivity(activity).moving ? "audio" : profileDefault;
+}
+
+/** Dopisek „ · Tylko głos” do opisu sesji – tylko gdy w ogóle jest wybór trybu. */
+export function modeSuffix(mode: CallMode, videoEnabled = VIDEO_ENABLED): string {
+  return videoEnabled ? ` · ${MODE_LABELS[mode]}` : "";
 }

@@ -10,8 +10,12 @@ describe("parametry sesji w adresie", () => {
     });
     expect(choiceFromSearch({ activity: "hack", duration: "30", mode: "x" })).toEqual({});
   });
+  it("bez kamery zamienia tryb wideo na głos", () => {
+    expect(choiceFromSearch({ activity: "praca", duration: "25", mode: "video" }, false).mode).toBe("audio");
+    expect(choiceFromSearch({ activity: "praca", duration: "25", mode: "video" }, true).mode).toBe("video");
+  });
   it("zapis i odczyt są zgodne", () => {
     const c = { activity: "praca" as const, duration: 25 as const, mode: "video" as const, goal: "Raport" };
-    expect(choiceFromSearch(Object.fromEntries(new URLSearchParams(choiceToSearch(c))))).toEqual(c);
+    expect(choiceFromSearch(Object.fromEntries(new URLSearchParams(choiceToSearch(c))), true)).toEqual(c);
   });
 });

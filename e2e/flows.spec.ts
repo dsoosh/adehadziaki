@@ -15,14 +15,19 @@ test("dwie osoby łączą się natychmiast, kończą sesję i oceniają ją", as
 
   // Kreator: jedno pytanie na ekran, dostępny
   await ania.goto("/teraz");
-  await expect(ania.getByText("Krok 1 z 4")).toBeVisible();
+  await expect(ania.getByText("Krok 1 z 3")).toBeVisible();
   await expectNoA11yViolations(ania);
+  // Kamera wyłączona flagą: po czasie od razu cel, bez pytania o tryb
+  await ania.getByRole("radio", { name: "Sprzątanie" }).click();
+  await ania.getByRole("radio", { name: /^25/ }).click();
+  await expect(ania.getByText("Krok 3 z 3")).toBeVisible();
+  await expect(ania.getByRole("heading", { name: "Twój cel na tę sesję" })).toBeVisible();
 
-  await startInstant(ania, "Sprzątanie", "25", "Kamera i głos");
+  await startInstant(ania, "Sprzątanie", "25");
   await expect(ania.getByRole("heading", { name: /Szukamy kogoś/ })).toBeVisible();
   await expectNoA11yViolations(ania);
 
-  await startInstant(bartek, "Praca", "25", "Kamera i głos");
+  await startInstant(bartek, "Praca", "25");
 
   await expect(ania).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
   await expect(bartek).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
@@ -33,10 +38,21 @@ test("dwie osoby łączą się natychmiast, kończą sesję i oceniają ją", as
   await expect(bartek.getByText("Sprzątanie")).toBeVisible();
 
   // Dołączenie (bez klucza Daily – tryb demonstracyjny)
+  await expect(ania.getByText(/25 min · Tylko głos/)).toBeVisible();
   await ania.getByRole("button", { name: "Dołącz do sesji" }).click();
   await expect(ania.getByRole("timer")).toBeVisible();
   await expect(ania.getByText("Powitanie")).toBeVisible();
+  await expect(ania.locator("video")).toHaveCount(0);
   await expectNoA11yViolations(ania);
+
+  // Pokój zgłasza obecność (w demo bez partnera wspólny czas to 0)
+  const sessionId = ania.url().split("/").pop()!;
+  const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false },
+  });
+  await expect
+    .poll(async () => (await admin.from("session_attendance").select("together_seconds").eq("session_id", sessionId)).data)
+    .toEqual([{ together_seconds: 0 }]);
 
   await ania.getByRole("button", { name: "Zakończ" }).click();
   await ania.getByRole("button", { name: "Tak, zakończ" }).click();
@@ -49,8 +65,12 @@ test("dwie osoby łączą się natychmiast, kończą sesję i oceniają ją", as
   await ania.getByRole("button", { name: "Nie łącz mnie więcej z tą osobą" }).click();
   await expect(ania.getByText("Nie połączymy Cię więcej z: Bartek.")).toBeVisible();
 
-  await startInstant(ania, "Praca", "50", "Tylko głos");
-  await startInstant(bartek, "Praca", "50", "Tylko głos");
+  // Krótka sesja bez partnera nie jest odbyta
+  await ania.goto("/sesje");
+  await expect(ania.getByTestId("week-stats")).toHaveText("Odbyte sesje w tym tygodniu: 0");
+
+  await startInstant(ania, "Praca", "50");
+  await startInstant(bartek, "Praca", "50");
   await bartek.waitForTimeout(5000);
   await expect(ania.getByRole("heading", { name: /Szukamy kogoś/ })).toBeVisible();
   await expect(bartek.getByRole("heading", { name: /Szukamy kogoś/ })).toBeVisible();
@@ -68,7 +88,6 @@ test("rezerwacja slotu łączy dwie osoby, anulowanie zwalnia partnera", async (
     await page.goto("/zaplanuj");
     await page.getByRole("radio", { name: "Nauka" }).click();
     await page.getByRole("radio", { name: /^75/ }).click();
-    await page.getByRole("radio", { name: /^Tylko głos/ }).click();
     await page.getByRole("button", { name: "Wybierz godzinę" }).click();
     await expect(page.getByRole("heading", { name: "Na którą godzinę?" })).toBeVisible();
     return page.getByRole("listitem").getByRole("button").last();
@@ -183,8 +202,8 @@ test("pokój działa bez profilu partnera i zwalnia mikrofon po zakończeniu", a
     };
   });
 
-  await startInstant(ania, "Nauka", "25", "Kamera i głos");
-  await startInstant(bartek, "Nauka", "25", "Kamera i głos");
+  await startInstant(ania, "Nauka", "25");
+  await startInstant(bartek, "Nauka", "25");
   await expect(ania).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
 
   // Partner bez profilu (np. konto sprzed migracji lub usunięte).
@@ -226,8 +245,8 @@ test("pokój działa bez profilu partnera i zwalnia mikrofon po zakończeniu", a
 test("pokój: wybór, gdzie słychać partnera, przełącza mikrofon w trakcie rozmowy", async ({ browser }) => {
   const hela = await signUp(browser, "Hela");
   const igor = await signUp(browser, "Igor");
-  await startInstant(hela, "Gotowanie", "25", "Tylko głos");
-  await startInstant(igor, "Gotowanie", "25", "Tylko głos");
+  await startInstant(hela, "Gotowanie", "25");
+  await startInstant(igor, "Gotowanie", "25");
   await expect(hela).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
 
   await hela.getByRole("button", { name: "Dołącz do sesji" }).click();

@@ -9,7 +9,9 @@ export type ProfileState = { ok?: boolean; error?: string; message?: string };
 
 export async function updateProfile(_prev: ProfileState, fd: FormData): Promise<ProfileState> {
   const displayName = String(fd.get("displayName") ?? "").trim();
-  const mode = fd.get("defaultMode") === "audio" ? "audio" : "video";
+  // Bez kamery pole trybu jest schowane – wtedy nie zmieniamy zapisanej wartości.
+  const rawMode = fd.get("defaultMode");
+  const mode = rawMode === "audio" || rawMode === "video" ? rawMode : undefined;
   const err = validateDisplayName(displayName);
   if (err) return { error: err };
 
@@ -21,7 +23,7 @@ export async function updateProfile(_prev: ProfileState, fd: FormData): Promise<
 
   const { error } = await supabase
     .from("profiles")
-    .update({ display_name: displayName, default_mode: mode })
+    .update(mode ? { display_name: displayName, default_mode: mode } : { display_name: displayName })
     .eq("id", user.id);
   if (error) return { message: "Nie udało się zapisać. Spróbuj ponownie." };
   revalidatePath("/", "layout");

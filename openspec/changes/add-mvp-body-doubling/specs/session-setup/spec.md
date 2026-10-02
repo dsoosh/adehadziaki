@@ -25,10 +25,14 @@ Kreator MUST pozwolić wybrać czas trwania sesji: 25, 50 lub 75 minut.
 
 #### Scenario: Wybór czasu
 - **WHEN** użytkownik wybiera „50 min”
-- **THEN** kreator zapamiętuje czas i przechodzi do wyboru trybu rozmowy
+- **THEN** kreator zapamiętuje czas i przechodzi do kolejnego kroku (wyboru trybu, gdy kamera jest włączona, inaczej do celu)
 
 ### Requirement: Wybór trybu rozmowy
-Kreator MUST pozwolić wybrać tryb „Kamera i głos” albo „Tylko głos”. Tryb audio SHALL być odpowiedni dla czynności w ruchu (spacer, sprzątanie, ogród).
+Kamera jest sterowana flagą konfiguracji `NEXT_PUBLIC_VIDEO_ENABLED` (domyślnie wyłączona). Przy wyłączonej kamerze kreator MUST mieć 3 kroki (czynność → czas → cel), wszystkie nowe sesje MUST być głosowe, a pokój MUST otwierać się bez kamery także dla sesji zapisanych wcześniej jako wideo (z wyjątkiem sesji testowej administratora). Przy włączonej kamerze kreator MUST pozwolić wybrać tryb „Kamera i głos” albo „Tylko głos”, a tryb audio SHALL być odpowiedni dla czynności w ruchu (spacer, sprzątanie, ogród).
+
+#### Scenario: Kamera wyłączona
+- **WHEN** kamera jest wyłączona flagą, a użytkownik wybrał czynność i czas
+- **THEN** widzi „Krok 3 z 3” z polem celu, bez pytania o tryb, a sesja jest „Tylko głos”
 
 #### Scenario: Sugestia audio dla spaceru
 - **WHEN** użytkownik wybrał czynność „Spacer”

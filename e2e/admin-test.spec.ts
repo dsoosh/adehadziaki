@@ -28,6 +28,8 @@ async function loginAdmin(browser: Browser) {
 test("admin uruchamia sesję testową i dołącza z dwóch urządzeń", async ({ browser }) => {
   const desktop = await loginAdmin(browser);
   await expect(desktop.getByRole("heading", { name: "Test połączenia" })).toBeVisible();
+  // Kamera wyłączona flagą: w profilu nie ma wyboru trybu
+  await expect(desktop.getByText("Domyślny sposób rozmowy")).toHaveCount(0);
   await expectNoA11yViolations(desktop);
 
   await desktop.getByRole("button", { name: "Test głosowy" }).click();
@@ -54,4 +56,11 @@ test("zwykły użytkownik nie ma testu połączenia", async ({ browser }) => {
   await page.goto("/profil");
   await expect(page.getByRole("heading", { name: "Profil" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Test połączenia" })).toHaveCount(0);
+});
+
+test("test z kamerą działa mimo wyłączonej kamery w zwykłych sesjach", async ({ browser }) => {
+  const page = await loginAdmin(browser);
+  await page.getByRole("button", { name: "Test z kamerą" }).click();
+  await expect(page).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
+  await expect(page.getByText(/Kamera i głos/)).toBeVisible();
 });

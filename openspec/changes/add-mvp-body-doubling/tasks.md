@@ -71,3 +71,11 @@
 - [x] 13.1 Migracja: rodzaj sesji `test` z tą samą osobą po obu stronach; zweryfikować testem SQL (zwykła sesja wymaga dwóch osób, test widoczny tylko dla właściciela)
 - [x] 13.2 `ADMIN_EMAILS`, sekcja „Test połączenia” w profilu, informacja z „Kopiuj link” w pokoju, osobne id w tokenie Daily dla każdego wejścia; zweryfikować testem jednostkowym `isAdmin` i E2E na dwóch kontekstach przeglądarki
 
+## 14. Kamera za flagą
+
+- [x] 14.1 `NEXT_PUBLIC_VIDEO_ENABLED` (domyślnie wyłączona): kreator 3-krokowy, nowe sesje głosowe, pokój bez kamery także dla starszych sesji wideo, brak trybu w profilu, liście czekających i rezerwacjach; test admina z kamerą działa dalej; zweryfikować testem jednostkowym `effectiveMode`/`allowedMode` i E2E („Krok 3 z 3”, brak `<video>` w pokoju)
+
+## 15. Odbyta sesja
+
+- [x] 15.1 Migracja: `session_attendance`, `session_heartbeat` (limit 45 s, okno pokoju, bez sesji testowych), `session_attended` (≥ 10 min, zgłoszenie jednej strony wystarcza), `my_week_stats`; zweryfikować testami SQL (5 min nie liczy się, 10 min tak, obca osoba, RLS)
+- [x] 15.2 Pokój zgłasza obecność co 30 s i przy zakończeniu, licznik „Odbyte sesje w tym tygodniu” w „Moje sesje”; zweryfikować testem jednostkowym śledzenia obecności i E2E zgłoszenia z pokoju

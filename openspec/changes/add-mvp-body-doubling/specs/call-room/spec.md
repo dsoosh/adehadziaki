@@ -69,3 +69,26 @@ Osoba z listy administratorów SHALL móc z profilu uruchomić sesję testową (
 #### Scenario: Zwykły użytkownik
 - **WHEN** osoba spoza listy administratorów otwiera profil
 - **THEN** nie widzi sekcji „Test połączenia”
+
+#### Scenario: Test kamery przy wyłączonej kamerze
+- **WHEN** kamera jest wyłączona flagą, a administrator wybiera „Test z kamerą”
+- **THEN** pokój testowy otwiera się z kamerą
+
+### Requirement: Odbyta sesja
+Pokój SHALL co 30 sekund zgłaszać serwerowi, czy od poprzedniego zgłoszenia obie osoby były razem połączone. Serwer MUST doliczać wspólny czas najwyżej 45 sekund na zgłoszenie, tylko członkom sesji i tylko w oknie od 5 minut przed startem do 5 minut po końcu sesji. Sesja MUST być uznana za odbytą, gdy wspólny czas wynosi co najmniej 10 minut według zgłoszeń którejkolwiek ze stron. Sesje testowe MUST NOT być liczone. Ekran „Moje sesje” SHALL pokazywać liczbę odbytych sesji w bieżącym tygodniu (od poniedziałku, czas polski). Odbyte sesje są podstawą przyszłego limitu darmowych sesji.
+
+#### Scenario: Sesja zakończona po 5 minutach
+- **WHEN** dwie osoby rozmawiają 5 minut i kończą sesję
+- **THEN** sesja nie jest odbyta i nie zużywa limitu
+
+#### Scenario: Partner nie przyszedł
+- **WHEN** jedna osoba czeka w pokoju, a partner nie dołącza
+- **THEN** wspólny czas wynosi 0 i sesja nie jest odbyta
+
+#### Scenario: Zgłoszenie jednej strony wystarcza
+- **WHEN** jedna osoba zgłasza 10 minut wspólnej obecności, a druga nie wysyła zgłoszeń
+- **THEN** sesja jest odbyta dla obu osób
+
+#### Scenario: Zbyt częste zgłoszenia
+- **WHEN** klient wysyła zgłoszenia częściej niż co 30 sekund
+- **THEN** wspólny czas rośnie najwyżej o czas, który faktycznie upłynął

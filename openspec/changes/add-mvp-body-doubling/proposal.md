@@ -8,8 +8,9 @@ Osoby z ADHD często łatwiej zaczynają i kończą zadania, gdy ktoś inny prac
 
 - Nowa aplikacja webowa (PWA) po polsku, instalowalna na telefonie i komputerze.
 - Zakładanie konta, logowanie (e-mail + hasło, link magiczny, Google), reset hasła, wylogowanie, usunięcie konta.
-- Profil z nazwą wyświetlaną i domyślnym trybem rozmowy (wideo/audio).
-- Kreator sesji: wybór czynności, czasu trwania (25 / 50 / 75 min), trybu wideo lub audio i opcjonalnego celu.
+- Profil z nazwą wyświetlaną i domyślnym trybem rozmowy (wideo/audio – tylko gdy kamera jest włączona).
+- Kreator sesji: wybór czynności, czasu trwania (25 / 50 / 75 min), trybu wideo lub audio i opcjonalnego celu. Kamera jest za flagą konfiguracji i na start wyłączona – wszystkie sesje są głosowe, a kreator ma 3 kroki.
+- Liczenie odbytych sesji (≥ 10 min wspólnej obecności) – podstawa przyszłego limitu darmowych sesji.
 - Dwa sposoby łączenia w pary:
   - **Teraz** – kolejka, losowe dobranie osoby czekającej na sesję o tym samym czasie trwania;
   - **Zaplanuj** – rezerwacja slotu o pełnej lub pół godzinie, dobranie partnera przed startem.

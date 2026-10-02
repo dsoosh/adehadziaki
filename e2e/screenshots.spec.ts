@@ -16,7 +16,7 @@ for (const scheme of ["light", "dark"] as const) {
     const b = await signUp(browser, "Bartek Zieliński");
     await a.goto("/");
     await shot(a, "01-strona-glowna");
-    await startInstant(b, "Spacer", "25", "Tylko głos");
+    await startInstant(b, "Spacer", "25");
     await a.goto("/start");
     await expect(a.getByRole("link", { name: /Bartek/ })).toBeVisible({ timeout: 10_000 });
     await shot(a, "02-co-robimy");
@@ -25,8 +25,6 @@ for (const scheme of ["light", "dark"] as const) {
     await a.getByRole("radio", { name: "Sprzątanie" }).click();
     await shot(a, "04-kreator-czas");
     await a.getByRole("radio", { name: /^50/ }).click();
-    await shot(a, "05-kreator-tryb");
-    await a.getByRole("radio", { name: /^Kamera/ }).click();
     await a.getByRole("textbox").fill("Ogarnąć kuchnię i pranie");
     await shot(a, "06-kreator-cel");
     await a.getByRole("button", { name: "Szukaj partnera" }).click();
@@ -34,7 +32,7 @@ for (const scheme of ["light", "dark"] as const) {
     await a.waitForTimeout(3000);
     await shot(a, "07-szukanie");
 
-    await startInstant(b, "Praca", "50", "Kamera i głos");
+    await startInstant(b, "Praca", "50");
     await expect(a).toHaveURL(/\/sesja\//);
     await shot(a, "08-przed-dolaczeniem");
     await a.getByRole("button", { name: "Dołącz do sesji" }).click();

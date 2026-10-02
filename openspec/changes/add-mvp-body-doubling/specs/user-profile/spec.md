@@ -22,7 +22,11 @@ Każdy użytkownik MUST mieć nazwę wyświetlaną o długości 2–30 znaków. 
 - **THEN** partner widzi „Anna K.”, a nie pełną nazwę ani adres e-mail
 
 ### Requirement: Domyślny tryb rozmowy
-Użytkownik SHALL móc ustawić domyślny tryb rozmowy (wideo lub audio), który kreator sesji MUST wstępnie zaznaczać.
+Gdy kamera jest włączona flagą, użytkownik SHALL móc ustawić domyślny tryb rozmowy (wideo lub audio), który kreator sesji MUST wstępnie zaznaczać. Gdy kamera jest wyłączona, profil MUST NOT pokazywać tego wyboru, a zapis profilu MUST NOT zmieniać zapisanego trybu.
+
+#### Scenario: Kamera wyłączona
+- **WHEN** kamera jest wyłączona flagą, a użytkownik otwiera profil
+- **THEN** nie widzi sekcji „Domyślny sposób rozmowy”
 
 #### Scenario: Domyślny tryb w kreatorze
 - **WHEN** użytkownik z domyślnym trybem „audio” otwiera kreator sesji

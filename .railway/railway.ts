@@ -22,6 +22,12 @@ const VARIABLES = [
   "ADMIN_EMAILS",
 ] as const;
 
+/** Flagi funkcji – jawne wartości w repozytorium (nie sekrety). Zmiana = commit + redeploy. */
+const FLAGS = {
+  // Kamera w sesjach; "true" włącza wybór trybu wideo.
+  NEXT_PUBLIC_VIDEO_ENABLED: "false",
+};
+
 export default defineRailway(() => {
   const app = service("adehadziaki", {
     source: github("dsoosh/adehadziaki", { branch: "main" }),
@@ -36,7 +42,7 @@ export default defineRailway(() => {
     // Domena usługi Railway (*.up.railway.app) kieruje ruch na port aplikacji.
     // Pole `domains` służy tylko domenom własnym, więc tu jawnie serviceDomains.
     networking: { serviceDomains: { "adehadziaki-production.up.railway.app": { port: 8080 } } },
-    env: Object.fromEntries(VARIABLES.map((name) => [name, preserve()])),
+    env: { ...Object.fromEntries(VARIABLES.map((name) => [name, preserve()])), ...FLAGS },
   });
 
   return project("adehadziaki", { resources: [app] });

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cancelBooking } from "@/app/(app)/sesje/actions";
-import { getActivity, MODE_LABELS, type CallMode } from "@/lib/activities";
+import { getActivity, modeSuffix, type CallMode } from "@/lib/activities";
 import { JOIN_EARLY_MS } from "@/lib/session-phase";
 import { choiceToSearch } from "@/lib/session-params";
 import { dayLabel, formatTime } from "@/lib/time";
@@ -52,7 +52,7 @@ function BookingCard({ booking: b, now }: { booking: BookingRow; now: Date }) {
           {dayLabel(start, now)}, {formatTime(start)}
         </p>
         <p className="text-muted">
-          {activity.label} · {b.duration} min · {MODE_LABELS[b.mode]}
+          {activity.label} · {b.duration} min{modeSuffix(b.mode)}
         </p>
       </div>
 

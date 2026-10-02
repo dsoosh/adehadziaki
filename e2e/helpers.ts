@@ -20,11 +20,11 @@ export async function signUp(browser: Browser, name: string): Promise<Page> {
   return page;
 }
 
-export async function startInstant(page: Page, activity: string, duration: string, mode: string) {
+/** Kreator bez kamery: czynność → czas → cel (tryb zawsze głosowy). */
+export async function startInstant(page: Page, activity: string, duration: string) {
   await page.goto("/teraz");
   await page.getByRole("radio", { name: activity }).click();
   await page.getByRole("radio", { name: new RegExp(`^${duration}`) }).click();
-  await page.getByRole("radio", { name: new RegExp(`^${mode}`) }).click();
   await page.getByRole("button", { name: "Szukaj partnera" }).click();
 }
 

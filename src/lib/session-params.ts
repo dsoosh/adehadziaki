@@ -1,3 +1,4 @@
+import { allowedMode } from "./features";
 import { isActivityId, isDuration, type ActivityId, type CallMode, type Duration } from "./activities";
 
 export type SessionChoice = {
@@ -8,12 +9,15 @@ export type SessionChoice = {
 };
 
 /** Odczytuje wybory przekazane w adresie (np. „Jeszcze jedna sesja”). */
-export function choiceFromSearch(sp: Record<string, string | string[] | undefined>): Partial<SessionChoice> {
+export function choiceFromSearch(
+  sp: Record<string, string | string[] | undefined>,
+  videoEnabled?: boolean,
+): Partial<SessionChoice> {
   const out: Partial<SessionChoice> = {};
   if (isActivityId(sp.activity)) out.activity = sp.activity;
   const d = Number(sp.duration);
   if (isDuration(d)) out.duration = d;
-  if (sp.mode === "video" || sp.mode === "audio") out.mode = sp.mode;
+  if (sp.mode === "video" || sp.mode === "audio") out.mode = allowedMode(sp.mode, videoEnabled);
   if (typeof sp.goal === "string") out.goal = sp.goal.slice(0, 120);
   return out;
 }

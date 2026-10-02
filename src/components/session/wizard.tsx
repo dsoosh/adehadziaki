@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Headphones, Video } from "lucide-react";
-import { ACTIVITIES, DURATIONS, MODE_LABELS, getActivity, suggestedMode, type CallMode } from "@/lib/activities";
+import { ACTIVITIES, DURATIONS, MODE_LABELS, getActivity, modeSuffix, suggestedMode, type CallMode } from "@/lib/activities";
+import { VIDEO_ENABLED } from "@/lib/features";
 import type { SessionChoice } from "@/lib/session-params";
 import { Button } from "@/components/ui/button";
 import { ChoiceTile } from "@/components/ui/choice-tile";
@@ -17,14 +18,18 @@ type Props = {
   onCancel?: () => void;
 };
 
-const TOTAL = 4;
+/** Liczba kroków kreatora; bez kamery nie pytamy o tryb rozmowy. */
+export const WIZARD_STEPS = VIDEO_ENABLED ? 4 : 3;
+const TOTAL = WIZARD_STEPS;
+/** Numer kroku pokazywany osobie (bez kamery krok celu jest trzeci). */
+const shown = (step: number) => (VIDEO_ENABLED || step < 3 ? step : step - 1);
 
-/** Kreator: czynność → czas → tryb → cel. Jedno pytanie na ekran. */
+/** Kreator: czynność → czas → (tryb) → cel. Jedno pytanie na ekran. */
 export function SessionWizard({ profileMode, initial = {}, submitLabel, pending, onSubmit, onCancel }: Props) {
   const [step, setStep] = useState(() => (initial.activity && initial.duration && initial.mode ? 4 : 1));
   const [choice, setChoice] = useState<Partial<SessionChoice>>(initial);
 
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  const back = () => setStep((s) => (s === 4 && !VIDEO_ENABLED ? 2 : Math.max(1, s - 1)));
 
   if (step === 1) {
     return (
@@ -61,7 +66,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
               selected={choice.duration === d}
               onSelect={() => {
                 setChoice((c) => ({ ...c, duration: d }));
-                setStep(3);
+                setStep(VIDEO_ENABLED ? 3 : 4);
               }}
             />
           ))}
@@ -105,7 +110,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
   return (
     <section key="4" className="animate-view-in">
       <StepHeader
-        step={4}
+        step={shown(4)}
         total={TOTAL}
         title="Twój cel na tę sesję"
         hint="Nieobowiązkowe. Jedno zdanie wystarczy – partner je zobaczy."
@@ -132,7 +137,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
         />
         {ready && (
           <p className="text-muted">
-            {getActivity(choice.activity!).label} · {choice.duration} min · {MODE_LABELS[choice.mode!]}
+            {getActivity(choice.activity!).label} · {choice.duration} min{modeSuffix(choice.mode!)}
           </p>
         )}
         <Button type="submit" block disabled={!ready || pending}>

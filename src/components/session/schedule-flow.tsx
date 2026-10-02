@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getActivity, MODE_LABELS, type CallMode } from "@/lib/activities";
+import { getActivity, modeSuffix, type CallMode } from "@/lib/activities";
 import { toUserMessage } from "@/lib/errors";
 import type { SessionChoice } from "@/lib/session-params";
 import { groupByDay, upcomingSlots } from "@/lib/slots";
@@ -13,7 +13,7 @@ import { Card } from "@/components/ui/card";
 import { Notice } from "@/components/ui/notice";
 import { StepHeader } from "@/components/ui/step-header";
 import { PushPrompt } from "@/components/push-prompt";
-import { SessionWizard } from "./wizard";
+import { SessionWizard, WIZARD_STEPS } from "./wizard";
 
 type Props = {
   profileMode: CallMode;
@@ -93,7 +93,7 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
             {dayLabel(slot!, now)}, {formatTime(slot!)}
           </p>
           <p className="text-muted">
-            {getActivity(choice.activity).label} · {choice.duration} min · {MODE_LABELS[choice.mode]}
+            {getActivity(choice.activity).label} · {choice.duration} min{modeSuffix(choice.mode)}
           </p>
         </Card>
         <Notice tone={result.status === "matched" ? "success" : "info"}>
@@ -112,13 +112,13 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
   if (slot) {
     return (
       <section key="confirm" className="flex animate-view-in flex-col gap-6">
-        <StepHeader step={4} total={4} title="Potwierdź rezerwację" onBack={() => setSlot(null)} />
+        <StepHeader step={WIZARD_STEPS} total={WIZARD_STEPS} title="Potwierdź rezerwację" onBack={() => setSlot(null)} />
         <Card>
           <p className="text-2xl font-bold">
             {dayLabel(slot, now)}, {formatTime(slot)}
           </p>
           <p className="text-muted">
-            {getActivity(choice.activity).label} · {choice.duration} min · {MODE_LABELS[choice.mode]}
+            {getActivity(choice.activity).label} · {choice.duration} min{modeSuffix(choice.mode)}
           </p>
           {choice.goal && <p className="mt-2">Cel: {choice.goal}</p>}
         </Card>
@@ -133,8 +133,8 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
   return (
     <section key="slots" className="animate-view-in">
       <StepHeader
-        step={4}
-        total={4}
+        step={WIZARD_STEPS}
+        total={WIZARD_STEPS}
         title="Na którą godzinę?"
         hint="„Ktoś już czeka” oznacza, że od razu będziesz mieć partnera."
         onBack={() => setChoice(null)}

@@ -7,7 +7,7 @@ test("lista czekających: dołączenie do konkretnej osoby teraz", async ({ brow
   const anna = await signUp(browser, "Anna Lobbowska");
   const bartek = await signUp(browser, "Bartek Gość");
 
-  await startInstant(anna, "Sprzątanie", "25", "Tylko głos");
+  await startInstant(anna, "Sprzątanie", "25");
   await expect(anna.getByRole("heading", { name: /Szukamy kogoś/ })).toBeVisible();
 
   await bartek.goto("/start");
@@ -15,7 +15,7 @@ test("lista czekających: dołączenie do konkretnej osoby teraz", async ({ brow
   await expect(card).toBeVisible({ timeout: 10_000 });
   await expect(card).toContainText("Sprzątanie");
   await expect(card).toContainText("25 min");
-  await expect(card).toContainText("Tylko głos");
+  await expect(card).not.toContainText("głos"); // bez kamery tryb nie jest pokazywany
   await expect(bartek.getByText("Lobbowska")).toHaveCount(0);
   await expectNoA11yViolations(bartek);
 
@@ -40,7 +40,6 @@ test("lista czekających: zapis na zaplanowaną sesję konkretnej osoby", async 
   await celina.getByRole("radio", { name: "Nauka" }).click();
   // 50 min – inny czas niż w teście rezerwacji, żeby nie połączyć się z jego rezerwacją
   await celina.getByRole("radio", { name: /^50/ }).click();
-  await celina.getByRole("radio", { name: /^Tylko głos/ }).click();
   await celina.getByRole("button", { name: "Wybierz godzinę" }).click();
   await celina.getByRole("listitem").getByRole("button").last().click();
   await celina.getByRole("button", { name: "Zarezerwuj" }).click();
@@ -65,7 +64,7 @@ test("lista czekających: ktoś był szybszy", async ({ browser }) => {
   const filip = await signUp(browser, "Filip Pierwszy");
   const gosia = await signUp(browser, "Gosia Druga");
 
-  await startInstant(ewa, "Papierologia", "50", "Kamera i głos");
+  await startInstant(ewa, "Papierologia", "50");
   await filip.goto("/start");
   await gosia.goto("/start");
   const fCard = filip.getByRole("link", { name: /Ewa S\./ });

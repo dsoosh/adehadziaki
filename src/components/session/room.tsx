@@ -5,11 +5,14 @@ import { useRouter } from "next/navigation";
 import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { Bell, BellOff, Copy, Flag, Headphones, Mic, MicOff, PhoneOff, RefreshCw, Video, VideoOff } from "lucide-react";
 import { getActivity, MODE_LABELS } from "@/lib/activities";
+import { effectiveMode } from "@/lib/features";
 import { micOptions, OUTPUT_LABELS, preferredMic, type MicOption } from "@/lib/audio-devices";
+import { createPresenceTracker, HEARTBEAT_MS } from "@/lib/attendance";
 import { NETWORK_ERROR } from "@/lib/errors";
 import { PHASE_COPY, partnerNoShow, roomWindow, sessionPhase } from "@/lib/session-phase";
 import { choiceToSearch } from "@/lib/session-params";
 import type { JoinResponse, SessionDetails } from "@/lib/session-types";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import { formatClock, formatTime } from "@/lib/time";
 import { cn } from "@/lib/cn";
 import { Button, ButtonLink } from "@/components/ui/button";
@@ -51,7 +54,7 @@ export function Room({ session }: { session: SessionDetails }) {
   const router = useRouter();
   const startsAt = new Date(session.starts_at);
   const endsAt = new Date(session.ends_at);
-  const isVideo = session.mode === "video";
+  const isVideo = effectiveMode(session.mode, session.kind) === "video";
 
   const [now, setNow] = useState(() => new Date());
   const [stage, setStage] = useState<Stage>("prejoin");
@@ -79,6 +82,18 @@ export function Room({ session }: { session: SessionDetails }) {
   const streamRef = useRef<MediaStream | null>(null);
   const signalled = useRef(false);
   const finished = useRef(false);
+  const [presence] = useState(createPresenceTracker);
+  // W trybie demo partnera nie ma, więc zgłoszenia tylko zakładają wpis (wspólny czas = 0).
+  const countsAttendance = session.kind !== "test";
+
+  /** Zgłasza obecność: czy od poprzedniego zgłoszenia oboje byliście w pokoju. */
+  const heartbeat = useCallback(async () => {
+    const { error } = await supabaseBrowser().rpc("session_heartbeat", {
+      p_session: session.id,
+      p_together: presence.take(),
+    });
+    if (error) console.warn("[adh] heartbeat", error.message);
+  }, [session.id, presence]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
@@ -114,10 +129,14 @@ export function Room({ session }: { session: SessionDetails }) {
     async (suffix = "") => {
       if (finished.current) return;
       finished.current = true;
+      // Ostatnie zgłoszenie obecności – najwyżej 1,5 s, żeby nie wstrzymywać wyjścia.
+      if (stage === "in-call" && countsAttendance) {
+        await Promise.race([heartbeat(), new Promise((r) => setTimeout(r, 1500))]);
+      }
       await teardown();
       router.push(`/sesja/${session.id}/koniec${suffix}`);
     },
-    [router, session.id, teardown],
+    [router, session.id, teardown, stage, countsAttendance, heartbeat],
   );
 
   const win = roomWindow(startsAt, endsAt, now);
@@ -140,13 +159,14 @@ export function Room({ session }: { session: SessionDetails }) {
     const all = call.participants();
     setInRoom(Object.keys(all).length);
     const other = Object.values(all).find((p) => !p.local);
+    presence.see(Boolean(other));
     if (other) {
       setPartnerEverJoined(true);
       setRemote({ name: session.partner.name, video: playable(other, "video"), audio: playable(other, "audio") });
     } else {
       setRemote(null);
     }
-  }, [session.partner.name]);
+  }, [session.partner.name, presence]);
 
   async function join() {
     setError(null);
@@ -283,12 +303,21 @@ export function Room({ session }: { session: SessionDetails }) {
     return () => clearInterval(t);
   }, [stage, demo, syncParticipants]);
 
+  // Obecność: co 30 s zgłaszamy, czy partner był w pokoju (liczenie odbytych sesji).
+  useEffect(() => {
+    if (stage !== "in-call" || !countsAttendance) return;
+    void heartbeat();
+    const t = setInterval(() => void heartbeat(), HEARTBEAT_MS);
+    return () => clearInterval(t);
+  }, [stage, countsAttendance, heartbeat]);
+
   async function reconnect() {
     const call = callRef.current;
     const creds = credsRef.current;
     if (!call || !creds) return;
     setReconnecting(true);
     reconnectingRef.current = true;
+    presence.see(false);
     try {
       await call.leave();
       await call.join(creds);
@@ -397,7 +426,7 @@ export function Room({ session }: { session: SessionDetails }) {
         {testNotice}
         {partnerCard}
         <p className="text-muted">
-          {myActivity.label} · {session.duration} min · {MODE_LABELS[session.mode]}
+          {myActivity.label} · {session.duration} min · {MODE_LABELS[isVideo ? "video" : "audio"]}
         </p>
         <Notice>
           {isVideo

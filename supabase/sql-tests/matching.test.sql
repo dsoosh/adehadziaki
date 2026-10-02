@@ -268,6 +268,57 @@ select pg_temp.ok(get_session(:'sid_test') ->> 'kind' = 'test', 'admin widzi swo
 select set_config('request.jwt.claim.sub', :'b', false);
 select pg_temp.ok(get_session(:'sid_test') is null, 'inni nie widzą sesji testowej');
 
+-- Obecność i odbyta sesja (≥ 10 min razem)
+reset role;
+create function pg_temp.fails(q text) returns boolean language plpgsql as $$
+begin
+  execute q;
+  return false;
+exception when others then
+  return true;
+end $$;
+insert into sessions (kind, user_a, user_b, activity_a, activity_b, duration, mode, starts_at, ends_at)
+values ('instant', :'a', :'b', 'praca', 'praca', 25, 'audio', now() - interval '20 minutes', now() + interval '5 minutes')
+returning id as sid_att \gset
+insert into sessions (kind, user_a, user_b, activity_a, activity_b, duration, mode, starts_at, ends_at)
+values ('instant', :'a', :'b', 'praca', 'praca', 25, 'audio', now() - interval '3 hours', now() - interval '2 hours')
+returning id as sid_old \gset
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'c', false);
+select pg_temp.ok(pg_temp.fails(format('select session_heartbeat(%L, true)', :'sid_att')), 'obca osoba nie zgłasza obecności');
+select set_config('request.jwt.claim.sub', :'a', false);
+select session_heartbeat(:'sid_old', true);
+select session_heartbeat(:'sid_test', true);
+select session_heartbeat(:'sid_att', true);
+reset role;
+select pg_temp.ok((select count(*) from session_attendance where session_id in (:'sid_old', :'sid_test')) = 0,
+  'poza oknem pokoju i w teście obecność się nie liczy');
+select pg_temp.ok((select together_seconds from session_attendance where session_id = :'sid_att' and user_id = :'a') = 0,
+  'pierwsze zgłoszenie zaczyna liczenie od zera');
+update session_attendance set last_beat_at = now() - interval '10 minutes' where session_id = :'sid_att';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'a', false);
+select session_heartbeat(:'sid_att', true);
+select session_heartbeat(:'sid_att', true);
+select pg_temp.ok((select together_seconds from session_attendance where session_id = :'sid_att') = 45,
+  'jedno zgłoszenie dolicza najwyżej 45 s, częstsze nic nie dodają');
+reset role;
+update session_attendance set last_beat_at = now() - interval '30 seconds' where session_id = :'sid_att';
+set role authenticated;
+select session_heartbeat(:'sid_att', false);
+select pg_temp.ok((select together_seconds from session_attendance where session_id = :'sid_att') = 45,
+  'czas bez partnera się nie liczy');
+reset role;
+update session_attendance set together_seconds = 300 where session_id = :'sid_att';
+set role authenticated;
+select pg_temp.ok((my_week_stats() ->> 'attended')::int = 0, 'sesja zakończona po 5 minutach nie jest odbyta');
+reset role;
+insert into session_attendance (session_id, user_id, together_seconds) values (:'sid_att', :'b', 610);
+set role authenticated;
+select pg_temp.ok(my_week_stats() = '{"attended": 1, "minutes": 10}'::jsonb, 'zgłoszenie partnera wystarcza: 10 min razem to odbyta sesja');
+select pg_temp.ok((select count(*) from session_attendance) = 1, 'RLS: widać tylko własną obecność');
+select pg_temp.ok(pg_temp.fails(format('select session_attended(%L)', :'sid_att')), 'funkcje wewnętrzne niedostępne z klienta');
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();

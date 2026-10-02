@@ -68,6 +68,12 @@ Konfiguracja usługi jest w repozytorium jako **Infrastructure as Code**: [`.rai
 ### Test połączenia (administrator)
 Ustaw w Railway `ADMIN_EMAILS` (e-maile po przecinku). Osoba z listy ma w **Profilu** sekcję „Test połączenia”: „Test z kamerą” / „Test głosowy” otwiera pokój, w którym jest po obu stronach. Ten sam adres otwórz na drugim urządzeniu albo w drugiej karcie (przycisk „Kopiuj link”) i dołącz – sprawdzisz kamerę, dźwięk, słuchawki i połączenie przez Daily bez drugiej osoby.
 
+### Kamera (flaga)
+Na start wszystkie sesje są **tylko głosowe**: kreator ma 3 kroki, a pokój nie włącza kamery. Kamerę włącza `NEXT_PUBLIC_VIDEO_ENABLED=true` – wartość jest w [`.railway/railway.ts`](.railway/railway.ts) (`FLAGS`), więc zmiana to commit; zmienna jest wbudowywana przy buildzie, więc wymaga nowego wdrożenia. Test administratora „Test z kamerą” działa niezależnie od flagi. Bez zmiennej kamera jest wyłączona.
+
+### Odbyta sesja
+Pokój co 30 s zgłasza (`session_heartbeat`), czy obie osoby są razem połączone. Sesja jest **odbyta**, gdy wspólny czas to co najmniej **10 minut** (wystarczy zgłoszenie jednej strony; serwer dolicza najwyżej 45 s na zgłoszenie). Sesja przerwana po 5 minutach albo bez partnera się nie liczy. „Moje sesje” pokazuje liczbę odbytych sesji w tym tygodniu – to podstawa przyszłego darmowego limitu.
+
 ### 5. Przypomnienia (pg_cron)
 W Supabase SQL Editor uruchom [`supabase/cron.sql`](supabase/cron.sql) z podmienionym adresem Railway i `CRON_SECRET`. Co minutę wywoła `/api/cron/tick`, który wysyła przypomnienia 10 min i 1 min przed zaplanowaną sesją.
 

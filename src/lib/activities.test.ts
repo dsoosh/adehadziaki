@@ -9,9 +9,9 @@ describe("activities", () => {
   });
 
   it("dla czynności w ruchu sugeruje tylko głos", () => {
-    expect(suggestedMode("spacer", "video")).toBe("audio");
-    expect(suggestedMode("ogrod", "video")).toBe("audio");
-    expect(suggestedMode("praca", "video")).toBe("video");
-    expect(suggestedMode("praca", "audio")).toBe("audio");
+    expect(suggestedMode("spacer", "video", true)).toBe("audio");
+    expect(suggestedMode("ogrod", "video", true)).toBe("audio");
+    expect(suggestedMode("praca", "video", true)).toBe("video");
+    expect(suggestedMode("praca", "audio", true)).toBe("audio");
   });
 });
