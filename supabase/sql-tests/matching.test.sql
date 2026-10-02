@@ -180,6 +180,77 @@ reset role;
 insert into profiles (id, display_name, accepted_terms_at) values (:'c', 'Celina', now());
 set role authenticated;
 
+-- Lobby i skrócone nazwy
+reset role;
+select pg_temp.ok(short_name('Anna Maria Kowalska') = 'Anna K.', 'short_name: imię + inicjał nazwiska');
+select pg_temp.ok(short_name('  Ania ') = 'Ania', 'short_name: jedno słowo bez zmian');
+select pg_temp.ok(short_name('') = 'Partner' and short_name(null) = 'Partner', 'short_name: pusta nazwa');
+delete from match_queue;
+insert into auth.users (email, raw_user_meta_data) values
+  ('host@test.pl', '{"display_name":"Anna Maria Kowalska","accepted_terms_at":"2026-01-01T00:00:00Z"}'),
+  ('gosc1@test.pl', '{"display_name":"Gość Pierwszy"}'),
+  ('gosc2@test.pl', '{"display_name":"Gość Drugi"}');
+select id as host from auth.users where email = 'host@test.pl' \gset
+select id as g1 from auth.users where email = 'gosc1@test.pl' \gset
+select id as g2 from auth.users where email = 'gosc2@test.pl' \gset
+set role authenticated;
+
+select set_config('request.jwt.claim.sub', :'host', false);
+select instant_join(25, 'sprzatanie', 'audio', 'Tajny cel');
+select pg_temp.ok(jsonb_array_length(lobby() -> 'now') = 0, 'lobby nie pokazuje mnie samej');
+
+select set_config('request.jwt.claim.sub', :'g1', false);
+select lobby() -> 'now' -> 0 as entry \gset
+select pg_temp.ok((:'entry'::jsonb) ->> 'name' = 'Anna K.', 'lobby pokazuje imię + inicjał');
+select pg_temp.ok((:'entry'::jsonb) ->> 'activity' = 'sprzatanie' and (:'entry'::jsonb) ->> 'duration' = '25', 'lobby pokazuje czynność i czas');
+select pg_temp.ok(:'entry' not like '%Tajny%' and :'entry' not like '%Kowalska%' and (:'entry'::jsonb) ->> 'user_id' is null,
+  'lobby nie ujawnia celu, pełnej nazwy ani user_id');
+select (:'entry'::jsonb) ->> 'ticket' as ticket \gset
+
+select instant_join_ticket(:'ticket', 'praca') as joined \gset
+select pg_temp.ok((:'joined'::jsonb) ->> 'status' = 'matched', 'gość dołącza do wybranej osoby');
+select (:'joined'::jsonb) ->> 'session_id' as sid_lobby \gset
+select pg_temp.ok(get_session(:'sid_lobby') ->> 'mode' = 'audio' and get_session(:'sid_lobby') ->> 'duration' = '25',
+  'czas i tryb od gospodarza');
+select pg_temp.ok(get_session(:'sid_lobby') -> 'partner' ->> 'name' = 'Anna K.', 'gość widzi skróconą nazwę gospodarza');
+select pg_temp.ok(get_session(:'sid_lobby') -> 'partner' ->> 'goal' = 'Tajny cel', 'cel widać dopiero po połączeniu');
+
+select set_config('request.jwt.claim.sub', :'host', false);
+select pg_temp.ok(instant_poll() ->> 'session_id' = :'sid_lobby', 'gospodarz trafia do tej samej sesji');
+select pg_temp.ok(get_session(:'sid_lobby') -> 'me' ->> 'name' = 'Anna Maria Kowalska', 'własna nazwa jest pełna');
+
+select set_config('request.jwt.claim.sub', :'g2', false);
+select pg_temp.ok(instant_join_ticket(:'ticket', 'nauka') ->> 'status' = 'gone', 'zajęty wpis daje gone');
+
+-- Blokada ukrywa wpis w lobby
+select set_config('request.jwt.claim.sub', :'host', false);
+select instant_join(50, 'praca', 'video');
+reset role;
+insert into blocks (blocker_id, blocked_id) values (:'host', :'g2');
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'g2', false);
+select pg_temp.ok(jsonb_array_length(lobby() -> 'now') = 0, 'zablokowana osoba nie widzi wpisu w lobby');
+select set_config('request.jwt.claim.sub', :'g1', false);
+select pg_temp.ok(jsonb_array_length(lobby() -> 'now') = 1, 'inni nadal widzą wpis');
+select set_config('request.jwt.claim.sub', :'host', false);
+select instant_leave();
+
+-- Zaplanowane
+select (date_trunc('hour', now() at time zone 'Europe/Warsaw') + interval '20 hours') at time zone 'Europe/Warsaw' as slot2 \gset
+select book_slot(:'slot2', 75, 'ogrod', 'video', 'Prywatne') ->> 'booking_id' as hb \gset
+select set_config('request.jwt.claim.sub', :'g1', false);
+select lobby() -> 'scheduled' -> 0 as sentry \gset
+select pg_temp.ok((:'sentry'::jsonb) ->> 'booking_id' = :'hb' and (:'sentry'::jsonb) ->> 'name' = 'Anna K.', 'lobby pokazuje zaplanowaną sesję');
+select pg_temp.ok(:'sentry' not like '%Prywatne%', 'zaplanowana sesja bez celu');
+select book_with(:'hb', 'nauka') as bw \gset
+select pg_temp.ok((:'bw'::jsonb) ->> 'status' = 'matched', 'zapis na zaplanowaną sesję wybranej osoby');
+select pg_temp.ok((select partner_name from my_bookings() where id = ((:'bw'::jsonb) ->> 'booking_id')::uuid) = 'Anna K.',
+  'my_bookings pokazuje skróconą nazwę');
+select set_config('request.jwt.claim.sub', :'host', false);
+select pg_temp.ok((select status from my_bookings() where id = :'hb') = 'matched', 'gospodarz ma partnera');
+select set_config('request.jwt.claim.sub', :'g2', false);
+select pg_temp.ok(book_with(:'hb', 'praca') ->> 'status' = 'taken', 'zajęta rezerwacja daje taken');
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();

@@ -7,7 +7,7 @@ Przechowuje podstawowe informacje o użytkowniku potrzebne do sesji (jak go nazy
 ## ADDED Requirements
 
 ### Requirement: Nazwa wyświetlana
-Każdy użytkownik MUST mieć nazwę wyświetlaną o długości 2–30 znaków. Partner w sesji SHALL widzieć wyłącznie nazwę wyświetlaną, nigdy adres e-mail.
+Każdy użytkownik MUST mieć nazwę wyświetlaną o długości 2–30 znaków. Inne osoby (partner, lista czekających, przypomnienia) MUST widzieć wyłącznie imię i inicjał nazwiska utworzone z nazwy wyświetlanej (np. „Anna K.”), nigdy pełną nazwę ani adres e-mail.
 
 #### Scenario: Zmiana nazwy
 - **WHEN** użytkownik zmienia nazwę wyświetlaną w profilu na poprawną wartość
@@ -17,9 +17,9 @@ Każdy użytkownik MUST mieć nazwę wyświetlaną o długości 2–30 znaków. 
 - **WHEN** użytkownik podaje nazwę krótszą niż 2 znaki
 - **THEN** system nie zapisuje zmian i pokazuje komunikat o wymaganej długości
 
-#### Scenario: Prywatność e-maila
-- **WHEN** dwie osoby zostają połączone w sesję
-- **THEN** każda z nich widzi nazwę wyświetlaną partnera, a nie jego adres e-mail
+#### Scenario: Prywatność nazwy i e-maila
+- **WHEN** osoba o nazwie „Anna Maria Kowalska” zostaje połączona w sesję
+- **THEN** partner widzi „Anna K.”, a nie pełną nazwę ani adres e-mail
 
 ### Requirement: Domyślny tryb rozmowy
 Użytkownik SHALL móc ustawić domyślny tryb rozmowy (wideo lub audio), który kreator sesji MUST wstępnie zaznaczać.

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CalendarClock, Zap } from "lucide-react";
 import Link from "next/link";
+import { Lobby } from "@/components/session/lobby";
 import { Page } from "@/components/ui/page";
 import { requireUser } from "@/lib/supabase/server";
 
@@ -34,6 +35,7 @@ export default async function StartPage() {
           </span>
         </Link>
       </div>
+      <Lobby />
     </Page>
   );
 }

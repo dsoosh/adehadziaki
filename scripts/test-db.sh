@@ -13,3 +13,4 @@ for f in supabase/migrations/*.sql; do
 done
 psql -X -v ON_ERROR_STOP=1 -d "$DB" -f supabase/sql-tests/matching.test.sql 2>&1 | sed -n 's/.*NOTICE:  //p; /FAIL\|ERROR\|przeszły/p'
 bash supabase/sql-tests/concurrency.sh "$DB"
+bash supabase/sql-tests/lobby-race.sh "$DB"

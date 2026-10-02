@@ -12,11 +12,13 @@ for (const scheme of ["light", "dark"] as const) {
       await page.screenshot({ path: `docs/ui/${scheme}-${name}.png`, fullPage: true });
     };
 
-    const a = await signUp(browser, "Ania");
-    const b = await signUp(browser, "Bartek");
+    const a = await signUp(browser, "Ania Nowak");
+    const b = await signUp(browser, "Bartek Zieliński");
     await a.goto("/");
     await shot(a, "01-strona-glowna");
+    await startInstant(b, "Spacer", "25", "Tylko głos");
     await a.goto("/start");
+    await expect(a.getByRole("link", { name: /Bartek/ })).toBeVisible({ timeout: 10_000 });
     await shot(a, "02-co-robimy");
     await a.goto("/teraz");
     await shot(a, "03-kreator-czynnosc");

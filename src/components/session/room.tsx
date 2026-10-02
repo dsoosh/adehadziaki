@@ -121,7 +121,7 @@ export function Room({ session }: { session: SessionDetails }) {
     const other = Object.values(all).find((p) => !p.local);
     if (other) {
       setPartnerEverJoined(true);
-      setRemote({ name: other.user_name || session.partner.name, video: playable(other, "video"), audio: playable(other, "audio") });
+      setRemote({ name: session.partner.name, video: playable(other, "video"), audio: playable(other, "audio") });
     } else {
       setRemote(null);
     }

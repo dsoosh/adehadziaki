@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { shortName } from "@/lib/names";
 import { createMeetingToken, dailyConfigured, ensureRoom } from "@/lib/daily";
 import { canIssueToken } from "@/lib/session-phase";
 import { normalizeSession, type JoinResponse, type RawSessionDetails } from "@/lib/session-types";
@@ -30,7 +31,8 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sessions/[id]/
     await supabase.rpc("set_session_room", { p_session: session.id, p_room: room.name });
     const token = await createMeetingToken({
       roomName: room.name,
-      userName: session.me.name,
+      // Daily pokazuje tę nazwę drugiej osobie – tylko imię + inicjał.
+      userName: shortName(session.me.name),
       userId: user.id,
       endsAt,
       audioOnly: session.mode === "audio",

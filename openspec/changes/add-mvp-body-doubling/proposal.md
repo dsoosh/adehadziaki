@@ -13,6 +13,7 @@ Osoby z ADHD często łatwiej zaczynają i kończą zadania, gdy ktoś inny prac
 - Dwa sposoby łączenia w pary:
   - **Teraz** – kolejka, losowe dobranie osoby czekającej na sesję o tym samym czasie trwania;
   - **Zaplanuj** – rezerwacja slotu o pełnej lub pół godzinie, dobranie partnera przed startem.
+- Lista osób czekających na partnera (jak „lobby” w Lichess) z możliwością dołączenia do wybranej osoby – teraz albo na zaplanowaną godzinę.
 - Pokój rozmowy 1:1 (wideo lub audio) z licznikiem czasu i prostą strukturą sesji (powitanie → praca → podsumowanie).
 - Ekran po sesji z krótką oceną, zgłoszeniem i blokowaniem partnera.
 - Przypomnienia o zaplanowanych sesjach (powiadomienia push w PWA).
@@ -20,7 +21,7 @@ Osoby z ADHD często łatwiej zaczynają i kończą zadania, gdy ktoś inny prac
 
 ### Poza zakresem
 
-- Sesje grupowe (więcej niż 2 osoby) i wybór konkretnego partnera / „ulubieni”.
+- Sesje grupowe (więcej niż 2 osoby), „ulubieni” i zapraszanie konkretnych osób spoza listy czekających.
 - Czat tekstowy, znajomi, profile publiczne, statystyki i grywalizacja.
 - Płatności i plany abonamentowe.
 - Aplikacje natywne w sklepach (tylko PWA).
@@ -36,6 +37,7 @@ Osoby z ADHD często łatwiej zaczynają i kończą zadania, gdy ktoś inny prac
 - `user-profile`: nazwa wyświetlana, domyślny tryb rozmowy, usunięcie konta.
 - `session-setup`: kreator wyboru czynności, czasu trwania, trybu i celu sesji.
 - `instant-matching`: kolejka „Teraz” i losowe łączenie w pary.
+- `session-lobby`: lista osób czekających na partnera (teraz i zaplanowane) i dołączanie do wybranej osoby.
 - `scheduled-sessions`: rezerwacja slotów, łączenie zaplanowanych sesji, anulowanie i przypomnienia.
 - `call-room`: pokój rozmowy wideo/audio 1:1 z licznikiem czasu i fazami sesji.
 - `partner-safety`: ocena po sesji, zgłaszanie i blokowanie partnerów, obsługa nieobecności partnera.

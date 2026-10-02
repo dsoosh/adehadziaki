@@ -59,3 +59,9 @@
 ## 11. Integracja
 
 - [x] 11.1 Pełny przebieg E2E: rejestracja dwóch osób → „Zacznij teraz” → wspólny pokój (demo) → koniec → ocena; oraz audyt dostępności (axe) kluczowych ekranów bez błędów kontrastu
+
+## 12. Lista osób czekających i skrócone nazwy
+
+- [x] 12.1 Migracja: `short_name`, `ticket` w kolejce, `lobby()`, `instant_join_ticket`, `book_with`; skrócone nazwy w `get_session` i `my_bookings`; zweryfikować testami SQL (prywatność, blokady, gone/taken) i testem wyścigu dwóch gości
+- [x] 12.2 Lista „Czekają teraz” i „Zaplanowane – szukają partnera” na ekranie startowym oraz ekran `/dolacz`; zweryfikować E2E dołączenia teraz, do zaplanowanej sesji i „ktoś był szybszy” z audytem axe
+- [x] 12.3 Imię + inicjał także w tokenie Daily i przypomnieniach (`shortName`); zweryfikować testem jednostkowym i E2E, że pełna nazwa nie jest widoczna dla partnera

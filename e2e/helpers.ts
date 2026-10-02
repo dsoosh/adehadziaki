@@ -12,7 +12,7 @@ export async function signUp(browser: Browser, name: string): Promise<Page> {
   const page = await context.newPage();
   await page.goto("/rejestracja");
   await page.getByLabel("Jak mamy Cię nazywać?").fill(name);
-  await page.getByLabel("E-mail").fill(uniqueEmail(name.toLowerCase()));
+  await page.getByLabel("E-mail").fill(uniqueEmail(name.toLowerCase().replace(/[^a-z]/g, "")));
   await page.getByLabel("Hasło").fill("bardzo-tajne-haslo");
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "Załóż konto", exact: true }).click();

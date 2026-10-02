@@ -1,4 +1,5 @@
 import { getActivity } from "@/lib/activities";
+import { shortName } from "@/lib/names";
 import { notifyUser } from "@/lib/push";
 import { pickReminders, reminderText } from "@/lib/reminders";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
       const partnerId = s ? (s.user_a === b.user_id ? s.user_b : s.user_a) : null;
       if (partnerId) {
         const { data: p } = await admin.from("profiles").select("display_name").eq("id", partnerId).single();
-        partnerName = p?.display_name ?? null;
+        partnerName = p ? shortName(p.display_name) : null;
       }
     }
     count += await notifyUser(b.user_id, {
