@@ -5,6 +5,9 @@
     "buildCommand": "npm run build && cp -r public .next/standalone/ && cp -r .next/static .next/standalone/.next/"
   },
   "deploy": {
+    "preDeployCommand": [
+      "bash scripts/migrate.sh"
+    ],
     "startCommand": "bash scripts/start-standalone.sh",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 60,

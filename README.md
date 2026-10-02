@@ -34,7 +34,7 @@ Do E2E z przeglądarką spoza Playwrighta ustaw `CHROMIUM_PATH`. Przepływy z lo
 
 ### 1. Supabase
 1. Utwórz projekt w regionie **Frankfurt (eu-central-1)**.
-2. `npx supabase link --project-ref <ref>` i `npx supabase db push` – zakłada tabele, RLS i funkcje.
+2. Migracje (tabele, RLS, funkcje) wgrywa **Railway przy każdym wdrożeniu** – patrz krok 4.3. Ręcznie: `npm run db:migrate` z ustawionym `SUPABASE_DB_URL` albo `npx supabase link --project-ref <ref> && npx supabase db push`.
 3. Authentication → URL Configuration: *Site URL* = adres z Railway, *Redirect URLs* = `https://<domena>/auth/callback`.
 4. Logowanie i rejestracja przez Google:
    - [Google Cloud Console](https://console.cloud.google.com/) → APIs & Services → **OAuth consent screen**: typ *External*, nazwa aplikacji, e-mail kontaktowy; zakresy `email`, `profile`, `openid`.
@@ -53,6 +53,8 @@ Załóż konto, skopiuj klucz API (Developers) do `DAILY_API_KEY`. Pokoje tworz�
 1. New Project → Deploy from GitHub repo → to repozytorium. Build i start są w [`railway.json`](railway.json) (Next.js `standalone`, healthcheck `/api/health`). Start idzie przez `scripts/start-standalone.sh`, który ustawia `HOSTNAME=0.0.0.0` – bez tego serwer nasłuchuje tylko na nazwie kontenera i Railway zwraca „Application failed to respond”.
 2. Variables: wszystkie zmienne z [`.env.example`](.env.example); `NEXT_PUBLIC_SITE_URL` = publiczna domena serwisu. Zmienne `NEXT_PUBLIC_*` są wbudowywane przy buildzie – po ich zmianie zrób redeploy.
 3. Settings → Networking → Generate Domain (lub własna domena).
+4. **Migracje bazy:** dodaj zmienną `SUPABASE_DB_URL` – w Supabase kliknij **Connect** → **Session pooler** i skopiuj adres `postgresql://postgres.<ref>:[HASŁO]@aws-…pooler.supabase.com:5432/postgres` (wstaw hasło bazy; znaki specjalne zakoduj, np. `@` → `%40`). `preDeployCommand` w `railway.json` uruchamia `scripts/migrate.sh` przed każdym wdrożeniem; wgrywa tylko nowe migracje, a błąd przerywa wdrożenie (stara wersja działa dalej).
+   - Jeśli migracje były wcześniej wklejone ręcznie w SQL Editor, oznacz je raz jako wgrane: `npx supabase migration repair --status applied 20261002000000 20261003000000 --db-url "$SUPABASE_DB_URL"`.
 
 ### 5. Przypomnienia (pg_cron)
 W Supabase SQL Editor uruchom [`supabase/cron.sql`](supabase/cron.sql) z podmienionym adresem Railway i `CRON_SECRET`. Co minutę wywoła `/api/cron/tick`, który wysyła przypomnienia 10 min i 1 min przed zaplanowaną sesją.
