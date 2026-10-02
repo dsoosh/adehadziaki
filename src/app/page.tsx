@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Footprints, Handshake, Timer } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { ButtonLink } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Page } from "@/components/ui/page";
@@ -16,9 +17,12 @@ export default async function Home(props: PageProps<"/">) {
     <Page className="gap-10">
       <header className="flex items-center justify-between">
         <span className="text-lg font-bold text-accent">Adehadziaki</span>
-        <Link href="/logowanie" className="flex min-h-12 items-center font-bold">
-          Zaloguj się
-        </Link>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Link href="/logowanie" className="flex min-h-12 items-center px-2 font-bold">
+            Zaloguj się
+          </Link>
+        </div>
       </header>
 
       {sp.konto === "usuniete" && <Notice tone="success">Twoje konto zostało usunięte.</Notice>}

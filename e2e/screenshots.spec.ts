@@ -7,7 +7,8 @@ test.skip(!process.env.SCREENSHOTS || !supabaseReady, "Tylko na żądanie (SCREE
 for (const scheme of ["light", "dark"] as const) {
   test(`zrzuty ekranów (${scheme})`, async ({ browser }) => {
     const shot = async (page: import("@playwright/test").Page, name: string) => {
-      await page.emulateMedia({ colorScheme: scheme, reducedMotion: "reduce" });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await page.evaluate((t) => (document.documentElement.dataset.theme = t), scheme);
       await page.screenshot({ path: `docs/ui/${scheme}-${name}.png`, fullPage: true });
     };
 

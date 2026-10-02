@@ -105,7 +105,7 @@ export function InstantFlow({ profileMode, initial, autoStart }: Props) {
   if (stage === "searching") {
     const elapsed = Math.max(0, now - startedAt);
     return (
-      <section className="flex flex-1 flex-col items-center justify-center gap-6 text-center" aria-live="polite">
+      <section key="searching" className="flex flex-1 animate-view-in flex-col items-center justify-center gap-6 text-center" aria-live="polite">
         <div className="relative flex size-36 items-center justify-center">
           <span className="absolute inset-0 rounded-full bg-accent-soft motion-safe:animate-pulse" aria-hidden />
           <span className="relative text-3xl font-bold tabular-nums" aria-label={`Czekasz ${formatElapsed(elapsed)}`}>
@@ -128,7 +128,7 @@ export function InstantFlow({ profileMode, initial, autoStart }: Props) {
   if (stage === "expired" && choice) {
     const slot = nextSlot(new Date());
     return (
-      <section className="flex flex-col gap-6">
+      <section key="expired" className="flex animate-view-in flex-col gap-6">
         <h1 className="text-3xl font-bold">Tym razem nikogo nie ma</h1>
         <p className="text-muted">
           To nie Twoja wina – o tej porze jest mniej osób. Spróbuj jeszcze raz albo umów się na konkretną godzinę.

@@ -20,7 +20,7 @@ export function ChoiceTile({ label, description, icon: Icon, selected, onSelect 
       aria-checked={selected ?? false}
       onClick={onSelect}
       className={cn(
-        "flex min-h-20 w-full items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left transition-colors",
+        "pressable flex min-h-20 w-full items-center gap-4 rounded-2xl border-2 px-5 py-4 text-left",
         selected
           ? "border-accent bg-accent-soft"
           : "border-border bg-surface hover:border-accent",

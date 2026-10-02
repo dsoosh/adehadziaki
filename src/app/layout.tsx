@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible } from "next/font/google";
+import { NavProgress } from "@/components/nav-progress";
 import { ServiceWorkerRegister } from "@/components/service-worker-register";
+import { THEME_COLORS, THEME_INIT_SCRIPT } from "@/lib/theme-mode";
 import "./globals.css";
 
 const atkinson = Atkinson_Hyperlegible({
@@ -22,18 +24,20 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f0e8" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b201d" },
-  ],
+  themeColor: THEME_COLORS.light,
   width: "device-width",
   initialScale: 1,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="pl" className={`${atkinson.variable} h-full antialiased`}>
+    // Domyślnie jasny; skrypt w <head> przywraca zapamiętany wybór przed odmalowaniem.
+    <html lang="pl" data-theme="light" suppressHydrationWarning className={`${atkinson.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
+        <NavProgress />
         {children}
         <ServiceWorkerRegister />
       </body>

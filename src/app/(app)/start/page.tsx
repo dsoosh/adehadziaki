@@ -15,7 +15,7 @@ export default async function StartPage() {
       <div className="flex flex-col gap-4">
         <Link
           href="/teraz"
-          className="flex min-h-28 items-center gap-5 rounded-3xl bg-accent px-6 py-5 text-accent-text hover:opacity-90"
+          className="pressable flex min-h-28 items-center gap-5 rounded-3xl bg-accent px-6 py-5 text-accent-text hover:opacity-90"
         >
           <Zap aria-hidden className="size-10 shrink-0" strokeWidth={1.75} />
           <span className="flex flex-col">
@@ -25,7 +25,7 @@ export default async function StartPage() {
         </Link>
         <Link
           href="/zaplanuj"
-          className="flex min-h-28 items-center gap-5 rounded-3xl border-2 border-border bg-surface px-6 py-5 hover:border-accent"
+          className="pressable flex min-h-28 items-center gap-5 rounded-3xl border-2 border-border bg-surface px-6 py-5 hover:border-accent"
         >
           <CalendarClock aria-hidden className="size-10 shrink-0 text-accent" strokeWidth={1.75} />
           <span className="flex flex-col">

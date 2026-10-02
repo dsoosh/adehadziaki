@@ -21,11 +21,22 @@ Tekst MUST mieć kontrast co najmniej 4,5:1 względem tła (WCAG AA), bazowy roz
 - **THEN** audyt nie zgłasza błędów kontrastu ani zbyt małych celów dotykowych
 
 ### Requirement: Spokojna paleta i tryb ciemny
-Interfejs MUST używać ograniczonej, stonowanej palety: ciepłe kremowe tło, ciemny (nie czarny) tekst, jeden przygaszony kolor akcentu (szałwiowa zieleń) oraz ziemiste kolory stanu wyłącznie dla komunikatów. Interfejs MUST NOT używać jaskrawych kolorów podstawowych ani neonów i MUST respektować systemowy tryb ciemny.
+Interfejs MUST używać ograniczonej, stonowanej palety: ciepłe kremowe tło, ciemny (nie czarny) tekst, jeden przygaszony kolor akcentu (szałwiowa zieleń) oraz ziemiste kolory stanu wyłącznie dla komunikatów. Interfejs MUST NOT używać jaskrawych kolorów podstawowych ani neonów.
 
-#### Scenario: Tryb ciemny
-- **WHEN** system operacyjny użytkownika ma włączony tryb ciemny
-- **THEN** aplikacja wyświetla ciemne tło i jasny tekst z zachowaniem kontrastu
+#### Scenario: Paleta bez jaskrawych kolorów
+- **WHEN** użytkownik otwiera dowolny ekran aplikacji
+- **THEN** jedynym kolorem akcentu jest przygaszona zieleń, a tekst spełnia kontrast WCAG AA
+
+### Requirement: Przełącznik trybu jasnego i ciemnego
+Interfejs MUST domyślnie wyświetlać tryb jasny, niezależnie od ustawień systemu. W pasku nawigacji MUST być przełącznik trybu jasny/ciemny; wybór SHALL być zapamiętany na urządzeniu i zastosowany przy kolejnym wejściu bez mignięcia innego motywu.
+
+#### Scenario: Domyślnie jasny
+- **WHEN** nowa osoba otwiera aplikację na urządzeniu z systemowym trybem ciemnym
+- **THEN** aplikacja wyświetla się w trybie jasnym
+
+#### Scenario: Zmiana i zapamiętanie trybu
+- **WHEN** użytkownik wybiera w pasku „Włącz tryb ciemny” i później ponownie otwiera aplikację
+- **THEN** aplikacja od razu wyświetla się w trybie ciemnym, z zachowaniem kontrastu
 
 ### Requirement: Brak rozpraszaczy
 Interfejs MUST NOT zawierać automatycznie przewijanych karuzel, migających elementów, liczników nieprzeczytanych powiadomień ani reklam. Animacje MUST być wyłączone, gdy użytkownik ustawił preferencję ograniczenia ruchu.
@@ -33,6 +44,17 @@ Interfejs MUST NOT zawierać automatycznie przewijanych karuzel, migających ele
 #### Scenario: Ograniczenie ruchu
 - **WHEN** użytkownik ma włączone „ogranicz ruch” w systemie
 - **THEN** przejścia między ekranami są natychmiastowe, bez animacji
+
+### Requirement: Natychmiastowa reakcja na działanie
+Każdy przycisk i kafelek MUST dawać widoczną reakcję w chwili dotknięcia. Przejście do kolejnego ekranu MUST od razu pokazać wskaźnik ładowania (pasek postępu lub ekran „Ładuję…”), a nowy widok SHALL pojawiać się z łagodnym przejściem trwającym nie dłużej niż 250 ms.
+
+#### Scenario: Wolne przejście
+- **WHEN** użytkownik dotyka „Moje sesje”, a serwer odpowiada wolno
+- **THEN** u góry ekranu od razu pojawia się pasek postępu, a pasek nawigacji pozostaje widoczny
+
+#### Scenario: Wciśnięcie przycisku
+- **WHEN** użytkownik przytrzymuje palec na przycisku
+- **THEN** przycisk wizualnie się wciska (lekko zmniejsza)
 
 ### Requirement: Jasny język
 Komunikaty MUST być krótkie, po polsku, w drugiej osobie i bez żargonu. Przyciski MUST opisywać akcję czasownikiem (np. „Szukaj partnera”, a nie „OK”). Komunikaty o błędach MUST mówić, co zrobić dalej.

@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const base =
-  "inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-6 py-3 text-lg font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "pressable inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl px-6 py-3 text-lg font-bold disabled:cursor-not-allowed disabled:opacity-60";
 
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-accent-text hover:opacity-90",

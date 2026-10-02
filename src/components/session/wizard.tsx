@@ -28,7 +28,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
 
   if (step === 1) {
     return (
-      <section>
+      <section key="1" className="animate-view-in">
         <StepHeader step={1} total={TOTAL} title="Co chcesz zrobić?" onBack={onCancel} />
         <div role="radiogroup" aria-label="Czynność" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {ACTIVITIES.map((a) => (
@@ -50,7 +50,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
 
   if (step === 2) {
     return (
-      <section>
+      <section key="2" className="animate-view-in">
         <StepHeader step={2} total={TOTAL} title="Jak długo?" hint="Krótsza sesja to dobry start." onBack={back} />
         <div role="radiogroup" aria-label="Czas trwania" className="flex flex-col gap-3">
           {DURATIONS.map((d) => (
@@ -73,7 +73,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
   if (step === 3) {
     const moving = choice.activity ? getActivity(choice.activity).moving : false;
     return (
-      <section>
+      <section key="3" className="animate-view-in">
         <StepHeader step={3} total={TOTAL} title="Jak chcesz rozmawiać?" onBack={back} />
         <div role="radiogroup" aria-label="Tryb rozmowy" className="flex flex-col gap-3">
           <ChoiceTile
@@ -103,7 +103,7 @@ export function SessionWizard({ profileMode, initial = {}, submitLabel, pending,
 
   const ready = choice.activity && choice.duration && choice.mode;
   return (
-    <section>
+    <section key="4" className="animate-view-in">
       <StepHeader
         step={4}
         total={TOTAL}

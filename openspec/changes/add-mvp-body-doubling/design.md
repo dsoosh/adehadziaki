@@ -52,7 +52,7 @@ Service worker (`public/sw.js`, pisany ręcznie – bez wtyczek, które nie wspi
 *Alternatywa:* cron Railway – minimalny interwał zbyt duży dla przypomnień „za 1 minutę”.
 
 ### D8. UI: Tailwind 4 + własne komponenty, tokeny w CSS
-Tokeny kolorów jako zmienne CSS na `:root` z wariantem ciemnym; czcionka Atkinson Hyperlegible (`next/font/google`), 18 px bazowo. Komponenty: `Button`, `ChoiceTile`, `StepHeader`, `Card`, `Notice`, `Timer`. Teksty w `src/lib/copy.ts`. Paleta stonowana, przyjazna osobom z ADHD: ciepłe kremowe tło, przygaszona szałwiowa zieleń jako jedyny akcent, ziemiste kolory stanu (ochra, terakota) zamiast jaskrawych. Tekst ma kontrast ok. 10:1 zamiast „czerni na bieli” (~15:1) – mniej ostry, nadal powyżej WCAG AA; każdą parę sprawdza `src/lib/theme.test.ts`.
+Tokeny kolorów jako zmienne CSS na `:root` z wariantem `:root[data-theme="dark"]` (domyślnie jasny; przełącznik w pasku zapisuje wybór w `localStorage`, a skrypt w `<head>` stosuje go przed pierwszym odmalowaniem – bez mignięcia); czcionka Atkinson Hyperlegible (`next/font/google`), 18 px bazowo. Komponenty: `Button`, `ChoiceTile`, `StepHeader`, `Card`, `Notice`, `Timer`. Teksty w `src/lib/copy.ts`. Paleta stonowana, przyjazna osobom z ADHD: ciepłe kremowe tło, przygaszona szałwiowa zieleń jako jedyny akcent, ziemiste kolory stanu (ochra, terakota) zamiast jaskrawych. Tekst ma kontrast ok. 10:1 zamiast „czerni na bieli” (~15:1) – mniej ostry, nadal powyżej WCAG AA; każdą parę sprawdza `src/lib/theme.test.ts`.
 
 | token | jasny | ciemny |
 |---|---|---|

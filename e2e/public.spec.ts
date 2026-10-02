@@ -42,3 +42,29 @@ test("ekran offline jest po polsku", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Brak internetu" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Spróbuj ponownie" })).toBeVisible();
 });
+
+test("domyślnie tryb jasny, przełącznik w pasku zapamiętuje tryb ciemny", async ({ page }) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
+  const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+  expect(await theme()).toBe("light");
+  expect(await bg()).toBe("rgb(243, 240, 232)");
+
+  await page.getByRole("button", { name: "Włącz tryb ciemny" }).click();
+  expect(await theme()).toBe("dark");
+  expect(await bg()).toBe("rgb(27, 32, 29)");
+  await expectNoA11yViolations(page);
+
+  // Po odświeżeniu tryb jest ustawiony już w HTML, zanim React się załaduje.
+  await page.reload({ waitUntil: "commit" });
+  await page.waitForSelector("body");
+  expect(await theme()).toBe("dark");
+  await page.goto("/rejestracja");
+  expect(await theme()).toBe("dark");
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Włącz tryb jasny" }).click();
+  expect(await theme()).toBe("light");
+});

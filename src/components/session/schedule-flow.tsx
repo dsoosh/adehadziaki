@@ -86,7 +86,7 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
 
   if (result) {
     return (
-      <section className="flex flex-col gap-6">
+      <section key="done" className="flex animate-view-in flex-col gap-6">
         <h1 className="text-3xl font-bold">Zarezerwowane!</h1>
         <Card>
           <p className="text-2xl font-bold">
@@ -111,7 +111,7 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
 
   if (slot) {
     return (
-      <section className="flex flex-col gap-6">
+      <section key="confirm" className="flex animate-view-in flex-col gap-6">
         <StepHeader step={4} total={4} title="Potwierdź rezerwację" onBack={() => setSlot(null)} />
         <Card>
           <p className="text-2xl font-bold">
@@ -131,7 +131,7 @@ export function ScheduleFlow({ profileMode, initial, preselectedSlot, pushEnable
   }
 
   return (
-    <section>
+    <section key="slots" className="animate-view-in">
       <StepHeader
         step={4}
         total={4}
