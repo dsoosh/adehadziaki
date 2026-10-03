@@ -27,6 +27,10 @@ Plan Plus MUST obowiązywać do daty `plus_until`; po niej osoba wraca do planu 
 - **WHEN** osoba z aktywnym planem Plus czeka na partnera
 - **THEN** inni widzą przy jej nazwie na liście piórko
 
+#### Scenario: Plus dla administratorów
+- **WHEN** osoba z listy `ADMIN_EMAILS` wchodzi do aplikacji, a jej plan nie istnieje albo wygasa w ciągu 30 dni
+- **THEN** plan Plus zostaje ustawiony na rok od teraz, a inni widzą przy jej nazwie piórko
+
 #### Scenario: Wygaśnięcie planu
 - **WHEN** data `plus_until` minęła
 - **THEN** piórko i odznaka znikają, a w nagłówku jest znów zachęta „Przejdź na Plus”

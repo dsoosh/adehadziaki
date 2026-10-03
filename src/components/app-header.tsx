@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarDays, Feather, Sparkles, UserRound } from "lucide-react";
+import { isAdmin } from "@/lib/admin";
 import { isPlus } from "@/lib/plans";
 import { supabaseServer } from "@/lib/supabase/server";
 import { ThemeToggle } from "./theme-toggle";
@@ -11,6 +12,8 @@ async function currentPlus(): Promise<boolean> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return false;
+  // Admin ma Plus zawsze (requireUser zapisuje go w bazie – tu nie czekamy na ten zapis).
+  if (isAdmin(user.email)) return true;
   const { data } = await supabase.from("profiles").select("plus_until").eq("id", user.id).maybeSingle();
   return isPlus(data?.plus_until);
 }

@@ -4,6 +4,18 @@ export function isPlus(plusUntil: string | null | undefined, now = new Date()): 
   return Boolean(plusUntil) && new Date(plusUntil!).getTime() > now.getTime();
 }
 
+const DAY_MS = 24 * 3600_000;
+
+/**
+ * Administratorzy mają Plus automatycznie. Zwraca nową datę końca planu (rok od teraz),
+ * gdy admin nie ma planu albo wygasa on w ciągu 30 dni; w pozostałych przypadkach null.
+ */
+export function adminPlusUntil(admin: boolean, plusUntil: string | null | undefined, now = new Date()): string | null {
+  if (!admin) return null;
+  if (plusUntil && new Date(plusUntil).getTime() > now.getTime() + 30 * DAY_MS) return null;
+  return new Date(now.getTime() + 365 * DAY_MS).toISOString();
+}
+
 export type PlanPackage = "monthly" | "yearly";
 export type PaymentMethod = "blik" | "card" | "transfer";
 

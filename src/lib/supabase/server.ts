@@ -3,7 +3,9 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { isAdmin } from "@/lib/admin";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "@/lib/env";
+import { adminPlusUntil } from "@/lib/plans";
 
 export async function supabaseServer() {
   const cookieStore = await cookies();
@@ -57,5 +59,13 @@ export async function requireUser(nextPath = "/start") {
     .single<Profile>();
   // Brak profilu (konto sprzed migracji) lub brak zgody – ekran powitalny je uzupełni.
   if (!profile?.accepted_terms_at) redirect(`/witaj?next=${encodeURIComponent(nextPath)}`);
+
+  // Administratorzy (ADMIN_EMAILS) mają Plus automatycznie – zapis w bazie, żeby piórko widzieli też inni.
+  const renewedPlus = adminPlusUntil(isAdmin(user.email), profile.plus_until);
+  if (renewedPlus) {
+    const { error } = await supabaseAdmin().from("profiles").update({ plus_until: renewedPlus }).eq("id", user.id);
+    if (error) console.error("[adh] admin plus", error.message);
+    else profile.plus_until = renewedPlus;
+  }
   return { supabase, user, profile: profile as Profile };
 }

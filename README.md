@@ -77,7 +77,7 @@ Strona `/plus` porównuje plan darmowy z Plus (29 zł / mies. albo 290 zł / rok
 update profiles set plus_until = now() + interval '1 month'
 where id = (select id from auth.users where email = 'osoba@example.com');
 ```
-Osoba z Plus ma odznakę w nagłówku i piórko przy nazwie (lista czekających, pokój, rezerwacje). Zainteresowanie: `select package, method, count(*) from upgrade_intents group by 1, 2;`.
+**Administratorzy** (`ADMIN_EMAILS`) mają Plus automatycznie – przy wejściu do aplikacji plan ustawia się na rok i odnawia przed wygaśnięciem. Usunięcie z listy nie odbiera planu od razu (wygaśnie najpóźniej po roku; wcześniej: `update profiles set plus_until = null …`). Osoba z Plus ma odznakę w nagłówku i piórko przy nazwie (lista czekających, pokój, rezerwacje). Zainteresowanie: `select package, method, count(*) from upgrade_intents group by 1, 2;`.
 
 ### Odbyta sesja
 Pokój co 30 s zgłasza (`session_heartbeat`), czy obie osoby są razem połączone. Sesja jest **odbyta**, gdy wspólny czas to co najmniej **10 minut** (wystarczy zgłoszenie jednej strony; serwer dolicza najwyżej 45 s na zgłoszenie). Sesja przerwana po 5 minutach albo bez partnera się nie liczy. „Moje sesje” pokazuje liczbę odbytych sesji w tym tygodniu – to podstawa przyszłego darmowego limitu.

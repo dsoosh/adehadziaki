@@ -1,6 +1,6 @@
 import { expect, test, type Browser } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
-import { expectNoA11yViolations, signUp, supabaseReady } from "./helpers";
+import { expectNoA11yViolations, signUp, startInstant, supabaseReady } from "./helpers";
 
 test.skip(!supabaseReady, "Wymaga lokalnego Supabase");
 
@@ -63,4 +63,21 @@ test("test z kamerą działa mimo wyłączonej kamery w zwykłych sesjach", asyn
   await page.getByRole("button", { name: "Test z kamerą" }).click();
   await expect(page).toHaveURL(/\/sesja\/[0-9a-f-]+$/);
   await expect(page.getByText(/Kamera i głos/)).toBeVisible();
+});
+
+test("administrator ma plan Plus automatycznie i piórko widzą inni", async ({ browser }) => {
+  const page = await loginAdmin(browser);
+  await expect(page.getByRole("link", { name: "Masz plan Plus" })).toBeVisible();
+  await page.goto("/plus");
+  await expect(page.getByText("Masz plan Plus")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Przejdź do płatności/ })).toHaveCount(0);
+
+  await startInstant(page, "Papierologia", "75");
+  await expect(page.getByRole("heading", { name: /Szukamy kogoś/ })).toBeVisible();
+  const guest = await signUp(browser, "Gość Admina");
+  await expect(guest.getByRole("link", { name: "Przejdź na Plus" })).toBeVisible();
+  const card = guest.getByRole("link", { name: /^Admin T\./ });
+  await expect(card).toBeVisible({ timeout: 10_000 });
+  await expect(card.getByRole("img", { name: "Plus" })).toBeVisible();
+  await page.getByRole("button", { name: "Anuluj" }).click();
 });
