@@ -319,6 +319,37 @@ select pg_temp.ok(my_week_stats() = '{"attended": 1, "minutes": 10}'::jsonb, 'zg
 select pg_temp.ok((select count(*) from session_attendance) = 1, 'RLS: widać tylko własną obecność');
 select pg_temp.ok(pg_temp.fails(format('select session_attended(%L)', :'sid_att')), 'funkcje wewnętrzne niedostępne z klienta');
 
+-- Plan Plus: oznaczenie i zaślepka płatności
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'a', false);
+select pg_temp.ok(pg_temp.fails(format('update profiles set plus_until = now() + interval ''1 year'' where id = %L', :'a')),
+  'użytkownik nie nada sobie planu Plus');
+select pg_temp.ok(get_session(:'sid_att') -> 'partner' ->> 'plus' = 'false', 'bez planu partner nie ma oznaczenia');
+reset role;
+update profiles set plus_until = now() + interval '1 month' where id = :'b';
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'a', false);
+select pg_temp.ok(get_session(:'sid_att') -> 'partner' ->> 'plus' = 'true', 'partner z Plus ma oznaczenie w sesji');
+select pg_temp.ok(get_session(:'sid_att') -> 'me' ->> 'plus' = 'false', 'własny plan widoczny w sesji');
+select set_config('request.jwt.claim.sub', :'b', false);
+select instant_join(25, 'praca', 'audio');
+select set_config('request.jwt.claim.sub', :'c', false);
+select pg_temp.ok((select (e ->> 'plus')::boolean from jsonb_array_elements(lobby() -> 'now') e where e ->> 'name' = 'Bartek'),
+  'lobby oznacza osobę z Plus');
+reset role;
+update profiles set plus_until = now() - interval '1 day' where id = :'b';
+set role authenticated;
+select pg_temp.ok(not (select (e ->> 'plus')::boolean from jsonb_array_elements(lobby() -> 'now') e where e ->> 'name' = 'Bartek'),
+  'po wygaśnięciu planu oznaczenie znika');
+select set_config('request.jwt.claim.sub', :'b', false);
+select instant_leave();
+select record_upgrade_intent('yearly', 'blik');
+select pg_temp.ok(pg_temp.fails('select record_upgrade_intent(''lifetime'', ''blik'')'), 'nieznany pakiet odrzucony');
+select pg_temp.ok((select count(*) from upgrade_intents) = 1, 'zapisane zainteresowanie zakupem');
+select set_config('request.jwt.claim.sub', :'c', false);
+select pg_temp.ok((select count(*) from upgrade_intents) = 0, 'RLS: cudze zainteresowanie niewidoczne');
+reset role;
+
 -- Usunięcie konta
 select set_config('request.jwt.claim.sub', :'e', false);
 select delete_my_account();

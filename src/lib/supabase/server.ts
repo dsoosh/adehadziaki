@@ -36,6 +36,8 @@ export type Profile = {
   default_mode: "video" | "audio";
   push_enabled: boolean;
   accepted_terms_at: string | null;
+  /** Koniec planu Plus; null = plan darmowy. */
+  plus_until: string | null;
 };
 
 /**
@@ -50,7 +52,7 @@ export async function requireUser(nextPath = "/start") {
   if (!user) redirect(`/logowanie?next=${encodeURIComponent(nextPath)}`);
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, display_name, default_mode, push_enabled, accepted_terms_at")
+    .select("id, display_name, default_mode, push_enabled, accepted_terms_at, plus_until")
     .eq("id", user.id)
     .single<Profile>();
   // Brak profilu (konto sprzed migracji) lub brak zgody – ekran powitalny je uzupełni.

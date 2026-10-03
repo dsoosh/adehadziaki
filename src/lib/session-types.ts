@@ -1,8 +1,8 @@
 import type { CallMode } from "./activities";
 
-export type SessionSide = { name: string; activity: string; goal: string | null };
+export type SessionSide = { name: string; activity: string; goal: string | null; plus: boolean };
 
-type RawSessionSide = Omit<SessionSide, "name"> & { name: string | null };
+type RawSessionSide = Omit<SessionSide, "name" | "plus"> & { name: string | null; plus?: boolean };
 
 export type SessionDetails = {
   id: string;
@@ -31,7 +31,7 @@ export function normalizeSession(raw: RawSessionDetails | null): SessionDetails 
   if (!raw) return null;
   return {
     ...raw,
-    me: { ...raw.me, name: raw.me.name?.trim() || "Ty" },
-    partner: { ...raw.partner, name: raw.partner.name?.trim() || "Partner" },
+    me: { ...raw.me, name: raw.me.name?.trim() || "Ty", plus: Boolean(raw.me.plus) },
+    partner: { ...raw.partner, name: raw.partner.name?.trim() || "Partner", plus: Boolean(raw.partner.plus) },
   };
 }

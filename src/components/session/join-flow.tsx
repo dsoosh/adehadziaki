@@ -15,7 +15,7 @@ import { PushPrompt } from "@/components/push-prompt";
 import { LobbyCard } from "./lobby";
 
 type Props = { ticket?: string; bookingId?: string; pushEnabled: boolean };
-type Host = { name: string; activity: string; duration: number; mode: "video" | "audio"; aside: string };
+type Host = { name: string; plus: boolean; activity: string; duration: number; mode: "video" | "audio"; aside: string };
 
 /** Dołączenie do osoby z listy: jedno pytanie „Co Ty będziesz robić?”. */
 export function JoinFlow({ ticket, bookingId, pushEnabled }: Props) {
@@ -81,7 +81,7 @@ export function JoinFlow({ ticket, bookingId, pushEnabled }: Props) {
       <StepHeader step={1} total={1} title="Co Ty będziesz robić?" onBack={() => router.push("/start")} />
       <p className="mb-2 text-muted">Dołączasz do:</p>
       <div className="mb-6">
-        <LobbyCard name={host.name} activity={host.activity} duration={host.duration} mode={host.mode} aside={host.aside} />
+        <LobbyCard name={host.name} plus={host.plus} activity={host.activity} duration={host.duration} mode={host.mode} aside={host.aside} />
       </div>
       {error && (
         <Notice tone="danger" className="mb-4">

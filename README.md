@@ -71,6 +71,14 @@ Ustaw w Railway `ADMIN_EMAILS` (e-maile po przecinku). Osoba z listy ma w **Prof
 ### Kamera (flaga)
 Na start wszystkie sesje są **tylko głosowe**: kreator ma 3 kroki, a pokój nie włącza kamery. Kamerę włącza `NEXT_PUBLIC_VIDEO_ENABLED=true` – wartość jest w [`.railway/railway.ts`](.railway/railway.ts) (`FLAGS`), więc zmiana to commit; zmienna jest wbudowywana przy buildzie, więc wymaga nowego wdrożenia. Test administratora „Test z kamerą” działa niezależnie od flagi. Bez zmiennej kamera jest wyłączona.
 
+### Plan Plus (bez płatności)
+Strona `/plus` porównuje plan darmowy z Plus (29 zł / mies. albo 290 zł / rok) i pozwala wybrać pakiet oraz sposób płatności. Płatności nie są jeszcze podłączone: wybór trafia do tabeli `upgrade_intents` (ile osób chce kupić), nic nie jest pobierane. Plan nadaje się ręcznie w Supabase SQL Editor:
+```sql
+update profiles set plus_until = now() + interval '1 month'
+where id = (select id from auth.users where email = 'osoba@example.com');
+```
+Osoba z Plus ma odznakę w nagłówku i piórko przy nazwie (lista czekających, pokój, rezerwacje). Zainteresowanie: `select package, method, count(*) from upgrade_intents group by 1, 2;`.
+
 ### Odbyta sesja
 Pokój co 30 s zgłasza (`session_heartbeat`), czy obie osoby są razem połączone. Sesja jest **odbyta**, gdy wspólny czas to co najmniej **10 minut** (wystarczy zgłoszenie jednej strony; serwer dolicza najwyżej 45 s na zgłoszenie). Sesja przerwana po 5 minutach albo bez partnera się nie liczy. „Moje sesje” pokazuje liczbę odbytych sesji w tym tygodniu – to podstawa przyszłego darmowego limitu.
 

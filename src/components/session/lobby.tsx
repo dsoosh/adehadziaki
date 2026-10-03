@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Headphones, Video } from "lucide-react";
 import { getActivity, MODE_LABELS, type CallMode } from "@/lib/activities";
 import { VIDEO_ENABLED } from "@/lib/features";
+import { PlusMark } from "@/components/plus-mark";
 import type { LobbyData } from "@/lib/lobby-types";
 import { supabaseBrowser } from "@/lib/supabase/client";
 import { dayLabel, formatElapsed, formatTime } from "@/lib/time";
@@ -53,6 +54,7 @@ export function Lobby() {
                 <LobbyCard
                   href={`/dolacz?ticket=${e.ticket}`}
                   name={e.name}
+                  plus={e.plus}
                   activity={e.activity}
                   duration={e.duration}
                   mode={e.mode}
@@ -78,6 +80,7 @@ export function Lobby() {
                   <LobbyCard
                     href={`/dolacz?booking=${e.booking_id}`}
                     name={e.name}
+                    plus={e.plus}
                     activity={e.activity}
                     duration={e.duration}
                     mode={e.mode}
@@ -96,6 +99,7 @@ export function Lobby() {
 export function LobbyCard(props: {
   href?: string;
   name: string;
+  plus?: boolean;
   activity: string;
   duration: number;
   mode: CallMode;
@@ -107,7 +111,10 @@ export function LobbyCard(props: {
     <>
       <activity.icon aria-hidden className="size-8 shrink-0 text-accent" strokeWidth={1.75} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="text-lg font-bold">{props.name}</span>
+        <span className="flex items-center gap-1.5 text-lg font-bold">
+          {props.name}
+          {props.plus && <PlusMark />}
+        </span>
         <span className="flex flex-wrap items-center gap-x-2 text-muted">
           {activity.label} · {props.duration} min
           {VIDEO_ENABLED && (

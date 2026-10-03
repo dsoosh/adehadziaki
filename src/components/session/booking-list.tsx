@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { cancelBooking } from "@/app/(app)/sesje/actions";
 import { getActivity, modeSuffix, type CallMode } from "@/lib/activities";
+import { PlusMark } from "@/components/plus-mark";
 import { JOIN_EARLY_MS } from "@/lib/session-phase";
 import { choiceToSearch } from "@/lib/session-params";
 import { dayLabel, formatTime } from "@/lib/time";
@@ -21,6 +22,7 @@ export type BookingRow = {
   status: "open" | "matched";
   session_id: string | null;
   partner_name: string | null;
+  partner_plus: boolean;
 };
 
 export function BookingList({ bookings, nowIso }: { bookings: BookingRow[]; nowIso: string }) {
@@ -57,7 +59,10 @@ function BookingCard({ booking: b, now }: { booking: BookingRow; now: Date }) {
       </div>
 
       {b.status === "matched" ? (
-        <p className="font-bold text-success">Masz partnera: {b.partner_name ?? "—"}</p>
+        <p className="flex items-center gap-1.5 font-bold text-success">
+          Masz partnera: {b.partner_name ?? "—"}
+          {b.partner_plus && <PlusMark />}
+        </p>
       ) : started ? (
         <p className="font-bold text-warning">Nikt się nie zapisał na tę godzinę.</p>
       ) : (

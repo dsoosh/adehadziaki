@@ -49,6 +49,9 @@ for (const scheme of ["light", "dark"] as const) {
     await shot(a, "12-zaplanuj-godziny");
     await a.goto("/profil");
     await shot(a, "13-profil");
+    await a.goto("/plus");
+    await expect(a.getByRole("heading", { name: "Plan Plus" })).toBeVisible();
+    await shot(a, "15-plus");
     await a.context().close();
     await b.context().close();
   });

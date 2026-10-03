@@ -21,6 +21,7 @@ import { ChoiceTile } from "@/components/ui/choice-tile";
 import { Notice } from "@/components/ui/notice";
 import { AudioSink, Avatar, VideoTile, gentleSignal } from "./media";
 import { ReportForm } from "./report-form";
+import { PlusMark } from "@/components/plus-mark";
 
 type Stage = "prejoin" | "requesting" | "denied" | "joining" | "in-call" | "error";
 
@@ -411,7 +412,10 @@ export function Room({ session }: { session: SessionDetails }) {
   const partnerCard = (
     <Card className="flex flex-col gap-1">
       <p className="text-sm text-muted">Twój partner</p>
-      <p className="text-xl font-bold">{session.partner.name}</p>
+      <p className="flex items-center gap-1.5 text-xl font-bold">
+        {session.partner.name}
+        {session.partner.plus && <PlusMark />}
+      </p>
       <p>{partnerActivity.label}</p>
       {session.partner.goal && <p className="text-muted">Cel: {session.partner.goal}</p>}
     </Card>
